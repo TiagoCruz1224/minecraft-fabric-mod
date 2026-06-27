@@ -1,5 +1,10 @@
 package com.tiagocruz.ascendant;
 
+import com.tiagocruz.ascendant.command.AscendantCommands;
+import com.tiagocruz.ascendant.event.AscendantServerTickEvents;
+import com.tiagocruz.ascendant.event.PlayerEvents;
+import com.tiagocruz.ascendant.network.ServerNetworking;
+import com.tiagocruz.ascendant.registry.AscendantAttachments;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
@@ -12,6 +17,11 @@ public class Ascendant implements ModInitializer {
     @Override
     public void onInitialize() {
         LOGGER.info("[Ascendant] The System awakens.");
+        ServerNetworking.register();
+        AscendantAttachments.register();
+        PlayerEvents.register();
+        AscendantServerTickEvents.register();
+        AscendantCommands.register();
     }
 
     public static ResourceLocation id(String path) {
