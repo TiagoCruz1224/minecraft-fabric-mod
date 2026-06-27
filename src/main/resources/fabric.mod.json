@@ -1,31 +1,30 @@
 {
 	"schemaVersion": 1,
-	"id": "tiagocraftmod",
+	"id": "ascendant",
 	"version": "${version}",
-	"name": "TiagoCraftMod",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"name": "Ascendant",
+	"description": "A world where only one may Ascend.",
 	"authors": [
-		"Me!"
+		"TiagoCruz"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"sources": "https://github.com/TiagoCruz1224/minecraft-fabric-mod"
 	},
-	"license": "CC0-1.0",
-	"icon": "assets/tiagocraftmod/icon.png",
+	"license": "MIT",
+	"icon": "assets/ascendant/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.tiagocruz.minecraftmod.TiagoCraftMod"
+			"com.tiagocruz.ascendant.Ascendant"
 		],
 		"client": [
-			"com.tiagocruz.minecraftmod.client.TiagoCraftModClient"
+			"com.tiagocruz.ascendant.client.AscendantClient"
 		]
 	},
 	"mixins": [
-		"tiagocraftmod.mixins.json",
+		"ascendant.mixins.json",
 		{
-			"config": "tiagocraftmod.client.mixins.json",
+			"config": "ascendant.client.mixins.json",
 			"environment": "client"
 		}
 	],
