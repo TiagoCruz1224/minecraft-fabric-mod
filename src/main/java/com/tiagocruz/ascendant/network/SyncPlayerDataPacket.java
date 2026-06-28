@@ -1,7 +1,6 @@
 package com.tiagocruz.ascendant.network;
 
 import com.tiagocruz.ascendant.Ascendant;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -19,6 +18,9 @@ public record SyncPlayerDataPacket(
     int endurance,
     int intelligence,
     int perception,
+    int vitality,
+    int dexterity,
+    int wisdom,
     String playerClass
 ) implements CustomPacketPayload {
 
@@ -37,6 +39,9 @@ public record SyncPlayerDataPacket(
                 buf.writeInt(pkt.endurance());
                 buf.writeInt(pkt.intelligence());
                 buf.writeInt(pkt.perception());
+                buf.writeInt(pkt.vitality());
+                buf.writeInt(pkt.dexterity());
+                buf.writeInt(pkt.wisdom());
                 buf.writeUtf(pkt.playerClass());
             },
             buf -> new SyncPlayerDataPacket(
@@ -49,12 +54,5 @@ public record SyncPlayerDataPacket(
                 buf.readInt(),
                 buf.readInt(),
                 buf.readInt(),
-                buf.readUtf()
-            )
-        );
-
-    @Override
-    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
-}
+                buf.readInt(),
+                buf.

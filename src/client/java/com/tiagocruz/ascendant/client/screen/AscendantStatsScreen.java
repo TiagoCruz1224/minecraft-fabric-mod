@@ -14,39 +14,13 @@ import java.util.List;
 
 /**
  * Ecrã de Stats do Sistema Ascendant (tecla K).
- *
- * Layout:
- * ┌──────────────────────────────────┐
- * │  ⚔ SISTEMA ASCENDANT            │
- * │  [  ATRIBUTOS  ] [  PODERES  ]  │
- * ├──────────────────────────────────┤
- * │  Tab ATRIBUTOS:                  │
- * │   Nome  |  Rank: Latente I       │
- * │   Nível 1 | MAGE                 │
- * │   XP ████░░░░ 0/100              │
- * │                                  │
- * │   FOR  5  [+]   AGI  5  [+]      │
- * │   RES  5  [+]   INT  5  [+]      │
- * │   PER  5  [+]                    │
- * │                                  │
- * │   Pontos disponíveis: 3          │
- * └──────────────────────────────────┘
- *
- * Tab PODERES:
- * │   [ÍCONE CLASSE]   MAGE          │
- * │                                  │
- * │   PASSIVA                        │
- * │   ▸ Regeneração constante...     │
- * │                                  │
- * │   ACTIVA  (Em Desenvolvimento)   │
- * │   ▸ ??? Em breve                 │
- * └──────────────────────────────────┘
+ * 8 atributos em grelha 4x2 com ícones Unicode.
  */
 public class AscendantStatsScreen extends Screen {
 
     // Dimensões do painel central
-    private static final int PANEL_W = 280;
-    private static final int PANEL_H = 210;
+    private static final int PANEL_W = 290;
+    private static final int PANEL_H = 240;
 
     // Cores
     private static final int C_BG        = 0xE0080810;
@@ -54,20 +28,18 @@ public class AscendantStatsScreen extends Screen {
     private static final int C_HEADER    = 0xFF0D1B2A;
     private static final int C_XP_BG     = 0xFF1C2C3C;
     private static final int C_XP_FILL   = 0xFF00AAFF;
-    private static final int C_TAB_ACT   = 0xFF1A3A6A;
-    private static final int C_TAB_INACT = 0xFF0A1520;
     private static final int C_STAT_BG   = 0xFF0D1B2A;
     private static final int C_GOLD      = 0xFFFFD700;
     private static final int C_WHITE     = 0xFFFFFFFF;
     private static final int C_GRAY      = 0xFFAAAAAA;
-    private static final int C_GREEN     = 0xFF44FF44;
     private static final int C_CYAN      = 0xFF00CCFF;
 
     // Estado das tabs
     private int activeTab = 0; // 0 = ATRIBUTOS, 1 = PODERES
 
-    // Botões de stat points (só visíveis quando há pontos)
-    private Button btnFor, btnAgi, btnRes, btnInt, btnPer;
+    // Botões de stat points — 8 stats
+    private Button btnFor, btnAgi, btnRes, btnInt;
+    private Button btnPer, btnVit, btnDex, btnWis;
     private Button btnTabStats, btnTabPowers;
 
     // Posição do painel (calculada em init)
@@ -79,7 +51,7 @@ public class AscendantStatsScreen extends Screen {
 
     @Override
     protected void init() {
-        panelX = (this.width - PANEL_W) / 2;
+        panelX = (this.width  - PANEL_W) / 2;
         panelY = (this.height - PANEL_H) / 2;
 
         int tabY = panelY + 28;
@@ -98,58 +70,60 @@ public class AscendantStatsScreen extends Screen {
         addRenderableWidget(btnTabStats);
         addRenderableWidget(btnTabPowers);
 
-        // Stat point buttons — posição fixa, visibilidade gerida em render
-        int statStartY = panelY + 110;
-        int col1 = panelX + 58;
-        int col2 = panelX + 168;
-
-        btnFor = makeStatButton("strength", col1, statStartY);
-        btnAgi = makeStatButton("agility",  col2, statStartY);
-        btnRes = makeStatButton("endurance",    col1, statStartY + 22);
-        btnInt = makeStatButton("intelligence", col2, statStartY + 22);
-        btnPer = makeStatButton("perception",   col1, statStartY + 44);
+        // Posições dos botões "+" — serão actualizadas em drawStat()
+        // Criamos com posição dummy; o drawStat reposiciona a cada frame
+        btnFor = makeStatButton("strength");
+        btnAgi = makeStatButton("agility");
+        btnRes = makeStatButton("endurance");
+        btnInt = makeStatButton("intelligence");
+        btnPer = makeStatButton("perception");
+        btnVit = makeStatButton("vitality");
+        btnDex = makeStatButton("dexterity");
+        btnWis = makeStatButton("wisdom");
 
         addRenderableWidget(btnFor);
         addRenderableWidget(btnAgi);
         addRenderableWidget(btnRes);
         addRenderableWidget(btnInt);
         addRenderableWidget(btnPer);
+        addRenderableWidget(btnVit);
+        addRenderableWidget(btnDex);
+        addRenderableWidget(btnWis);
 
         refreshStatButtons();
     }
 
-    private Button makeStatButton(String stat, int x, int y) {
-        return Button.builder(Component.literal("§a+"), btn -> {
-            ClientPlayNetworking.send(new SpendStatPointPacket(stat));
-        }).pos(x, y).size(14, 12).build();
+    private Button makeStatButton(String stat) {
+        return Button.builder(Component.literal("§a+"), btn ->
+            ClientPlayNetworking.send(new SpendStatPointPacket(stat))
+        ).pos(0, 0).size(14, 12).build();
     }
 
     private void refreshStatButtons() {
         boolean showStats = activeTab == 0;
         boolean hasPoints = ClientPlayerData.getStatPoints() > 0;
-        btnFor.visible = showStats && hasPoints;
-        btnAgi.visible = showStats && hasPoints;
-        btnRes.visible = showStats && hasPoints;
-        btnInt.visible = showStats && hasPoints;
-        btnPer.visible = showStats && hasPoints;
-        // Ocultar tab buttons em PODERES — não, deixar sempre visíveis
+        boolean show = showStats && hasPoints;
+        btnFor.visible = show;
+        btnAgi.visible = show;
+        btnRes.visible = show;
+        btnInt.visible = show;
+        btnPer.visible = show;
+        btnVit.visible = show;
+        btnDex.visible = show;
+        btnWis.visible = show;
     }
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        // Fundo escuro sobre o jogo
+        // Fundo semi-transparente sem blur
         g.fill(0, 0, this.width, this.height, 0x88000000);
 
-        // Painel principal
         drawPanel(g);
 
-        // Conteúdo da tab activa
         if (activeTab == 0) renderStatsTab(g);
-        else                 renderPowersTab(g);
+        else                renderPowersTab(g);
 
-        // Actualizar visibilidade dos botões + antes de render
         refreshStatButtons();
-
         super.render(g, mx, my, pt);
     }
 
@@ -160,35 +134,28 @@ public class AscendantStatsScreen extends Screen {
 
         // Sombra
         g.fill(x + 4, y + 4, x + w + 4, y + h + 4, 0x66000000);
-
         // Fundo
         g.fill(x, y, x + w, y + h, C_BG);
-
-        // Borda exterior
+        // Borda
         drawBorder(g, x, y, w, h, C_BORDER);
-
         // Header
         g.fill(x, y, x + w, y + 26, C_HEADER);
         drawBorder(g, x, y, w, 26, C_BORDER);
-
         // Título
-        String title = "§b⚔ §fSISTEMA §bASCENDANT";
-        g.drawString(font, Component.literal(title), x + 6, y + 9, C_WHITE, true);
-
-        // Linha separadora das tabs
+        g.drawString(font, Component.literal("§b⚔ §fSISTEMA §bASCENDANT"), x + 6, y + 9, C_WHITE, true);
+        // Separador de tabs
         g.fill(x, y + 44, x + w, y + 45, C_BORDER);
-
-        // Highlight da tab activa
+        // Highlight tab activa
         int tabY = y + 28;
-        if (activeTab == 0) g.fill(x + 4,   tabY, x + 94,  tabY + 14, C_TAB_ACT);
-        else                g.fill(x + 100,  tabY, x + 182, tabY + 14, C_TAB_ACT);
+        if (activeTab == 0) g.fill(x + 4,  tabY, x + 94,  tabY + 14, 0xFF1A3A6A);
+        else                g.fill(x + 100, tabY, x + 182, tabY + 14, 0xFF1A3A6A);
     }
 
     private void drawBorder(GuiGraphics g, int x, int y, int w, int h, int color) {
-        g.fill(x,         y,         x + w,     y + 1,     color); // top
-        g.fill(x,         y + h - 1, x + w,     y + h,     color); // bottom
-        g.fill(x,         y,         x + 1,     y + h,     color); // left
-        g.fill(x + w - 1, y,         x + w,     y + h,     color); // right
+        g.fill(x,         y,         x + w,     y + 1,     color);
+        g.fill(x,         y + h - 1, x + w,     y + h,     color);
+        g.fill(x,         y,         x + 1,     y + h,     color);
+        g.fill(x + w - 1, y,         x + w,     y + h,     color);
     }
 
     // ── TAB ATRIBUTOS ────────────────────────────────────────────────────────
@@ -197,91 +164,121 @@ public class AscendantStatsScreen extends Screen {
         int x = panelX + 6;
         int y = panelY + 48;
 
-        // Dados do jogador
-        int    level    = ClientPlayerData.getLevel();
-        long   xp       = ClientPlayerData.getXp();
-        long   xpMax    = ClientPlayerData.getXpToNext();
-        int    sp       = ClientPlayerData.getStatPoints();
-        String cls      = ClientPlayerData.getPlayerClass();
-        PlayerRank rank = PlayerRank.fromLevel(level);
-        String clsName  = ClientPlayerData.isClassAssigned() ? getClassDisplayName(cls) : "???";
+        int    level = ClientPlayerData.getLevel();
+        long   xp    = ClientPlayerData.getXp();
+        long   xpMax = ClientPlayerData.getXpToNext();
+        int    sp    = ClientPlayerData.getStatPoints();
+        String cls   = ClientPlayerData.getPlayerClass();
 
-        // ─── Linha 1: Rank ───────────────────────────────────────────────────
+        PlayerRank rank    = PlayerRank.fromLevel(level);
+        String     clsName = ClientPlayerData.isClassAssigned() ? getClassDisplayName(cls) : "???";
+        String     clsCol  = getClassColor(cls);
+
+        // ─── Rank ────────────────────────────────────────────────────────────
         g.drawString(font,
             Component.literal("§7Rank: " + rank.getColored() + " §8[" + rank.getRoman() + "]"),
             x, y, C_WHITE, false);
-
-        // Nível para próximo rank (se não for máximo)
         if (rank != PlayerRank.ASCENDENTE) {
             int toNext = rank.levelsToNext(level);
             g.drawString(font,
-                Component.literal("§8(+" + toNext + " nv para " + PlayerRank.values()[rank.ordinal()+1].getDisplayName() + ")"),
-                x + 140, y, C_GRAY, false);
+                Component.literal("§8(+" + toNext + " nv para " +
+                    PlayerRank.values()[rank.ordinal()+1].getDisplayName() + ")"),
+                x + 138, y, 0xFF888888, false);
         }
 
-        // ─── Linha 2: Nível + Classe ─────────────────────────────────────────
+        // ─── Nível + Classe ───────────────────────────────────────────────────
         y += 11;
         g.drawString(font,
-            Component.literal("§fNível §e" + level + "  §7|  §b" + clsName),
+            Component.literal("§fNível §e" + level + "  §7|  " + clsCol + clsName),
             x, y, C_WHITE, false);
 
         // ─── Barra de XP ─────────────────────────────────────────────────────
         y += 13;
         int barW = PANEL_W - 14;
-        int barH = 5;
         float frac = xpMax > 0 ? Math.min(1f, (float) xp / xpMax) : 0f;
-        g.fill(x, y, x + barW, y + barH, C_XP_BG);
-        if (frac > 0) g.fill(x, y, x + (int)(barW * frac), y + barH, C_XP_FILL);
-        drawBorder(g, x, y, barW, barH, C_BORDER);
-        y += barH + 2;
+        g.fill(x, y, x + barW, y + 5, C_XP_BG);
+        if (frac > 0) g.fill(x, y, x + (int)(barW * frac), y + 5, C_XP_FILL);
+        drawBorder(g, x, y, barW, 5, C_BORDER);
+        y += 7;
         g.drawString(font,
             Component.literal("§7XP §f" + xp + " §8/ §f" + xpMax),
-            x, y, C_GRAY, false);
+            x, y, 0xFF888888, false);
 
         // ─── Separador ────────────────────────────────────────────────────────
-        y += 13;
+        y += 12;
         g.fill(panelX + 4, y, panelX + PANEL_W - 4, y + 1, C_BORDER);
         y += 5;
 
-        // ─── Stats (2 colunas) ────────────────────────────────────────────────
-        int col1X = panelX + 6;
-        int col2X = panelX + 120;
+        // ─── Grelha 4×2 de Stats ─────────────────────────────────────────────
+        // Cada célula: ícone + abreviatura + valor + botão [+]
+        // Layout: [col1] [col2]    col width ~138px each, gap=4
+        int col1X = panelX + 4;
+        int col2X = panelX + 4 + 143;
+        int rowH  = 22;
 
-        drawStat(g, "§cFOR", ClientPlayerData.getStrength(), col1X, y, btnFor);
-        drawStat(g, "§aAGI", ClientPlayerData.getAgility(),  col2X, y, btnAgi);
-        y += 22;
-        drawStat(g, "§6RES", ClientPlayerData.getEndurance(),    col1X, y, btnRes);
-        drawStat(g, "§9INT", ClientPlayerData.getIntelligence(), col2X, y, btnInt);
-        y += 22;
-        drawStat(g, "§dPER", ClientPlayerData.getPerception(),   col1X, y, btnPer);
+        //  Linha 1
+        drawStat(g, "§c⚔", "FOR", ClientPlayerData.getStrength(),    col1X, y, btnFor);
+        drawStat(g, "§a⚡", "AGI", ClientPlayerData.getAgility(),     col2X, y, btnAgi);
+        y += rowH;
+        //  Linha 2
+        drawStat(g, "§6♦", "RES", ClientPlayerData.getEndurance(),    col1X, y, btnRes);
+        drawStat(g, "§9✦", "INT", ClientPlayerData.getIntelligence(), col2X, y, btnInt);
+        y += rowH;
+        //  Linha 3
+        drawStat(g, "§e◉", "PER", ClientPlayerData.getPerception(),   col1X, y, btnPer);
+        drawStat(g, "§c♥", "VIT", ClientPlayerData.getVitality(),     col2X, y, btnVit);
+        y += rowH;
+        //  Linha 4
+        drawStat(g, "§f✧", "DES", ClientPlayerData.getDexterity(),    col1X, y, btnDex);
+        drawStat(g, "§b☆", "SAB", ClientPlayerData.getWisdom(),       col2X, y, btnWis);
+        y += rowH;
 
-        // ─── Pontos disponíveis ────────────────────────────────────────────────
+        // ─── Pontos disponíveis ───────────────────────────────────────────────
         if (sp > 0) {
-            y += 22;
-            g.fill(panelX + 4, y - 3, panelX + PANEL_W - 4, y + 13, 0x44FFDD00);
+            y += 2;
+            g.fill(panelX + 4, y, panelX + PANEL_W - 4, y + 13, 0x44FFDD00);
             g.drawString(font,
-                Component.literal("§e✦ §f" + sp + " ponto(s) de atributo disponíveis §e✦"),
-                panelX + 6, y, C_GOLD, true);
+                Component.literal("§e✦ §f" + sp + " ponto(s) disponíveis §e✦"),
+                panelX + 8, y + 3, C_GOLD, true);
+            y += 13;
         }
 
         // ─── Rodapé ───────────────────────────────────────────────────────────
         g.drawString(font,
             Component.literal("§8[ESC] Fechar  |  [K] Fechar"),
-            panelX + 6, panelY + PANEL_H - 11, C_GRAY, false);
+            panelX + 6, panelY + PANEL_H - 11, 0xFF888888, false);
     }
 
-    private void drawStat(GuiGraphics g, String label, int value, int x, int y, Button btn) {
-        // Fundo do stat
-        g.fill(x, y, x + 110, y + 18, C_STAT_BG);
-        drawBorder(g, x, y, 110, 18, C_BORDER);
+    /**
+     * Desenha uma célula de stat.
+     * @param icon  string com código de cor + ícone Unicode (ex: "§c⚔")
+     * @param abbr  abreviatura de 3 letras (ex: "FOR")
+     * @param value valor actual
+     * @param x     canto esquerdo da célula
+     * @param y     topo da célula
+     * @param btn   botão [+] associado
+     */
+    private void drawStat(GuiGraphics g, String icon, String abbr, int value,
+                           int x, int y, Button btn) {
+        int cellW = 139;
+        int cellH = 18;
 
-        // Label e valor
-        g.drawString(font, Component.literal(label), x + 4, y + 5, C_WHITE, false);
-        g.drawString(font, Component.literal("§f" + value), x + 38, y + 5, C_WHITE, true);
+        // Fundo + borda
+        g.fill(x, y, x + cellW, y + cellH, C_STAT_BG);
+        drawBorder(g, x, y, cellW, cellH, C_BORDER);
 
-        // Actualizar posição do botão (pode ter mudado por resize)
+        // Ícone (4px de margem)
+        g.drawString(font, Component.literal(icon), x + 4, y + 5, C_WHITE, true);
+
+        // Abreviatura (10px à frente do ícone — ícone ocupa ~8px)
+        g.drawString(font, Component.literal("§f" + abbr), x + 16, y + 5, C_WHITE, false);
+
+        // Valor (alinhado ~45px)
+        g.drawString(font, Component.literal("§f" + value), x + 46, y + 5, C_WHITE, true);
+
+        // Reposicionar botão [+] (55px à frente do início da célula)
         if (btn != null) {
-            btn.setX(x + 56);
+            btn.setX(x + 60);
             btn.setY(y + 3);
         }
     }
@@ -292,11 +289,10 @@ public class AscendantStatsScreen extends Screen {
         int x = panelX + 10;
         int y = panelY + 50;
 
-        String cls = ClientPlayerData.getPlayerClass();
+        String cls        = ClientPlayerData.getPlayerClass();
         String clsDisplay = ClientPlayerData.isClassAssigned() ? getClassDisplayName(cls) : "???";
         String clsColor   = getClassColor(cls);
 
-        // Classe em destaque
         g.drawString(font,
             Component.literal("§7Classe activa: " + clsColor + "§l" + clsDisplay),
             x, y, C_WHITE, true);
@@ -308,8 +304,7 @@ public class AscendantStatsScreen extends Screen {
         g.drawString(font, Component.literal("§bPASSIVA"), x, y, C_CYAN, true);
         y += 12;
 
-        List<String> passiveLines = getPassiveDescription(cls);
-        for (String line : passiveLines) {
+        for (String line : getPassiveDescription(cls)) {
             g.drawString(font, Component.literal("§7▸ §f" + line), x + 4, y, C_WHITE, false);
             y += 10;
         }
@@ -321,18 +316,17 @@ public class AscendantStatsScreen extends Screen {
         g.drawString(font, Component.literal("§6ACTIVA"), x, y, C_GOLD, true);
         y += 12;
 
-        List<String> activeLines = getActiveDescription(cls);
-        for (String line : activeLines) {
+        for (String line : getActiveDescription(cls)) {
             g.drawString(font, Component.literal("§7▸ §8" + line), x + 4, y, C_GRAY, false);
             y += 10;
         }
 
-        // Nota de WIP
+        // Nota WIP
         y += 6;
         g.fill(x, y, panelX + PANEL_W - 10, y + 18, 0x33FFAA00);
         drawBorder(g, x, y, PANEL_W - 20, 18, 0xFF664400);
         g.drawString(font,
-            Component.literal("§e⚠ §8As habilidades activas estão em desenvolvimento"),
+            Component.literal("§e⚠ §8Habilidades activas em desenvolvimento"),
             x + 2, y + 5, C_GRAY, false);
     }
 
@@ -375,20 +369,20 @@ public class AscendantStatsScreen extends Screen {
                 "Absorção escalada com Endurance",
                 "Resistência a dano permanente");
             case "MAGE" -> List.of(
-                "Regeneração constante escalada com Inteligência",
+                "Regeneração constante escalada com INT",
                 "Partículas arcanas visíveis a aliados");
             case "TITAN" -> List.of(
-                "Força aumentada com Strength",
+                "Força aumentada com FOR",
                 "Resistência a dano. Corpo impassível");
             case "ARCHER" -> List.of(
                 "Velocidade II constante",
-                "Visão Nocturna com Percepção ≥ 15");
+                "Visão Nocturna com PER ≥ 15");
             case "HEALER" -> List.of(
                 "Regeneração pessoal constante",
-                "Cura aliados a 8 blocos ao redor a cada 5s");
+                "Cura aliados a 8 blocos a cada 5s");
             case "SUMMONER" -> List.of(
                 "Velocidade + Força + Regeneração simultâneas",
-                "Aura de fogo de almas. Raros e imprevisíveis");
+                "Aura de fogo de almas");
             case "SPECTER" -> List.of(
                 "Invisibilidade + Velocidade III ao agachar",
                 "Velocidade II constante mesmo parado");
@@ -400,11 +394,11 @@ public class AscendantStatsScreen extends Screen {
         return switch (cls) {
             case "ASSASSIN" -> List.of("Execução — Teleporta atrás do alvo e aplica dano crítico", "[Em desenvolvimento]");
             case "GUARDIAN" -> List.of("Bastion — Bloqueia todos os danos por 3 segundos", "[Em desenvolvimento]");
-            case "MAGE"     -> List.of("Canalização — Dispara projéctil arcano de alto dano", "[Em desenvolvimento]");
-            case "TITAN"    -> List.of("Impacto Sísmico — Dano em área ao redor do jogador", "[Em desenvolvimento]");
+            case "MAGE"     -> List.of("Canalização — Projéctil arcano de alto dano", "[Em desenvolvimento]");
+            case "TITAN"    -> List.of("Impacto Sísmico — Dano em área ao redor", "[Em desenvolvimento]");
             case "ARCHER"   -> List.of("Flecha Penetrante — Atravessa múltiplos inimigos", "[Em desenvolvimento]");
-            case "HEALER"   -> List.of("Pulso Sagrado — Cura em área. Dano a mortos-vivos", "[Em desenvolvimento]");
-            case "SUMMONER" -> List.of("Invocação — Convoca um servo das sombras temporário", "[Em desenvolvimento]");
+            case "HEALER"   -> List.of("Pulso Sagrado — Cura em área, dano a mortos-vivos", "[Em desenvolvimento]");
+            case "SUMMONER" -> List.of("Invocação — Convoca servo das sombras temporário", "[Em desenvolvimento]");
             case "SPECTER"  -> List.of("Forma Espectral — Atravessa blocos por 5 segundos", "[Em desenvolvimento]");
             default         -> List.of("[Classe não atribuída]");
         };
@@ -414,7 +408,6 @@ public class AscendantStatsScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        // K ou ESC fecham o ecrã
         if (keyCode == org.lwjgl.glfw.GLFW.GLFW_KEY_K ||
             keyCode == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
             this.onClose();
@@ -425,4 +418,11 @@ public class AscendantStatsScreen extends Screen {
 
     @Override
     public boolean isPauseScreen() { return false; }
+
+    /** Remove o blur automático do Minecraft 1.21.4. */
+    @Override
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // intencional — o nosso render() já trata do fundo
+    }
 }
+                                                                                                                                                                                                                                                                                                                                                                

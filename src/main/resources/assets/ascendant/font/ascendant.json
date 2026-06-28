@@ -1,0 +1,29 @@
+{
+  "_comment": [
+    "Fonte personalizada do Ascendant.",
+    "",
+    "Para usar uma fonte TTF própria (ex: Cinzel, MedievalSharp, etc.):",
+    "  1. Coloca o ficheiro .ttf em: src/main/resources/assets/ascendant/font/",
+    "  2. Substitui o provider 'reference' abaixo por:",
+    "     {",
+    "       \"type\": \"ttf\",",
+    "       \"file\": \"ascendant:font/nome-do-ficheiro.ttf\",",
+    "       \"size\": 8.0,",
+    "       \"oversample\": 4.0,",
+    "       \"shift\": [0, 1],",
+    "       \"skip\": \" \"",
+    "     }",
+    "",
+    "Para mudar a fonte em TODO o Minecraft (menus, chat, etc.):",
+    "  Cria/edita: src/main/resources/assets/minecraft/font/default.json",
+    "  Conteúdo: { \"providers\": [ { \"type\": \"reference\", \"id\": \"ascendant:ascendant\" } ] }",
+    "",
+    "Por agora usa a fonte padrão do Minecraft como base."
+  ],
+  "providers": [
+    {
+      "type": "reference",
+      "id": "minecraft:default"
+    }
+  ]
+}

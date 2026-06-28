@@ -1,5 +1,6 @@
 package com.tiagocruz.ascendant;
 
+import com.tiagocruz.ascendant.attribute.AscendantAttributes;
 import com.tiagocruz.ascendant.command.AscendantCommands;
 import com.tiagocruz.ascendant.event.AscendantServerTickEvents;
 import com.tiagocruz.ascendant.event.ItemClassEvents;
@@ -19,16 +20,11 @@ public class Ascendant implements ModInitializer {
     @Override
     public void onInitialize() {
         LOGGER.info("[Ascendant] The System awakens.");
+        AscendantAttributes.register(); // deve ser primeiro (EntityAttributeModificationCallback)
         AscendantItems.register();
         ServerNetworking.register();
         AscendantAttachments.register();
         PlayerEvents.register();
         AscendantServerTickEvents.register();
         AscendantCommands.register();
-        ItemClassEvents.register();
-    }
-
-    public static ResourceLocation id(String path) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
-    }
-}
+        Ite

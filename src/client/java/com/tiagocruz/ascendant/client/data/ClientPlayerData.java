@@ -15,7 +15,16 @@ public class ClientPlayerData {
     private static int endurance = 5;
     private static int intelligence = 5;
     private static int perception = 5;
+    private static int vitality = 5;
+    private static int dexterity = 5;
+    private static int wisdom = 5;
     private static String playerClass = "NONE";
+    private static float currentMana = 100f;
+    private static int maxMana = 100;
+
+    // Água/sede — placeholder (sistema futuro). Começa cheio.
+    private static int waterLevel = 20;
+    private static final int MAX_WATER = 20;
 
     // Animação de level up
     private static long levelUpTimestamp = -1;
@@ -23,6 +32,7 @@ public class ClientPlayerData {
 
     public static void update(int lvl, long currentXp, long nextXp, int sp,
                                int str, int agi, int end, int intel, int per,
+                               int vit, int dex, int wis,
                                String cls) {
         if (lvl > level) {
             levelUpTimestamp = System.currentTimeMillis();
@@ -36,6 +46,9 @@ public class ClientPlayerData {
         endurance = end;
         intelligence = intel;
         perception = per;
+        vitality = vit;
+        dexterity = dex;
+        wisdom = wis;
         playerClass = cls;
     }
 
@@ -45,15 +58,4 @@ public class ClientPlayerData {
     public static int getStatPoints() { return statPoints; }
     public static int getStrength() { return strength; }
     public static int getAgility() { return agility; }
-    public static int getEndurance() { return endurance; }
-    public static int getIntelligence() { return intelligence; }
-    public static int getPerception() { return perception; }
-    public static String getPlayerClass() { return playerClass; }
-
-    public static boolean isClassAssigned() { return !playerClass.equals("NONE"); }
-
-    public static boolean isShowingLevelUp() {
-        return levelUpTimestamp > 0 &&
-               (System.currentTimeMillis() - levelUpTimestamp) < LEVEL_UP_DISPLAY_MS;
-    }
-}
+    public static int getEndurance() { ret

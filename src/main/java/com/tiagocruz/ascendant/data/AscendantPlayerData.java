@@ -18,12 +18,20 @@ public class AscendantPlayerData {
     private long xp = 0;
     private int statPoints = 0;
 
-    // Stats base
-    private int strength = 5;
-    private int agility = 5;
-    private int endurance = 5;
-    private int intelligence = 5;
-    private int perception = 5;
+    // Stats base (8 atributos)
+    private int strength = 5;      // FOR — dano corpo a corpo
+    private int agility = 5;       // AGI — velocidade, cooldown esquiva
+    private int endurance = 5;     // RES — redução de dano, knockback
+    private int intelligence = 5;  // INT — dano mágico, mana máxima
+    private int perception = 5;    // PER — alcance, crítico à distância
+    private int vitality = 5;      // VIT — vida máxima, regen de vida
+    private int dexterity = 5;     // DES — crítico corpo a corpo, precisão projéteis
+    private int wisdom = 5;        // SAB — cooldowns de habilidades, regen de mana
+
+    // Mana — recurso para habilidades (não persistido; regenera ao entrar)
+    private float currentMana = 100f;
+    // Cooldowns de habilidades (não persistidos — transitórios em memória)
+    private final java.util.Map<String, Long> abilityCooldowns = new java.util.HashMap<>();
 
     // Tracking de comportamento (tutorial)
     private int meleeKills = 0;
@@ -48,6 +56,52 @@ public class AscendantPlayerData {
     public int getEndurance() { return endurance; }
     public int getIntelligence() { return intelligence; }
     public int getPerception() { return perception; }
+    public int getVitality() { return vitality; }
+    public int getDexterity() { return dexterity; }
+    public int getWisdom() { return wisdom; }
+
+    // ── Mana ──────────────────────────────────────────────────────────────────
+
+    /** Mana máxima: base 100 + INT*10 + SAB*5 */
+    public int getMaxMana() {
+        return 100 + (intelligence - 5) * 10 + (wisdom - 5) * 5;
+    }
+
+    public float getCurrentMana() { return currentMana; }
+
+    public void setCurrentMana(float mana) {
+        this.currentMana = Math.max(0, Math.min(mana, getMaxMana()));
+    }
+
+    /** Consome mana. Retorna false se não houver suficiente. */
+    public boolean consumeMana(int amount) {
+        if (currentMana < amount) return false;
+        currentMana -= amount;
+        return true;
+    }
+
+    /** Regenera mana. Rate base: 0.5/tick + 0.02*SAB/tick. */
+    public void regenMana() {
+        float rate = 0.5f + (wisdom - 5) * 0.02f;
+        setCurrentMana(currentMana + rate);
+    }
+
+    // ── Cooldowns ─────────────────────────────────────────────────────────────
+
+    public boolean isOnCooldown(String abilityId) {
+        Long endTime = abilityCooldowns.get(abilityId);
+        return endTime != null && System.currentTimeMillis() < endTime;
+    }
+
+    public long getCooldownRemaining(String abilityId) {
+        Long endTime = abilityCooldowns.get(abilityId);
+        if (endTime == null) return 0;
+        return Math.max(0, endTime - System.currentTimeMillis());
+    }
+
+    public void setCooldown(String abilityId, long durationMs) {
+        abilityCooldowns.put(abilityId, System.currentTimeMillis() + durationMs);
+    }
 
     // Tracking
     public void addMeleeKill() { meleeKills++; }
@@ -62,77 +116,4 @@ public class AscendantPlayerData {
     public int getDamageAbsorbed() { return damageAbsorbed; }
     public int getSnuckTicks() { return snuckTicks; }
     public int getObservationTicks() { return observationTicks; }
-    public int getBlocksMinedSlow() { return blocksMinedSlow; }
-
-    // XP e level up
-    public long xpForNextLevel() {
-        return (long)(100 * Math.pow(level, 1.5));
-    }
-
-    public boolean addXp(long amount) {
-        xp += amount;
-        if (xp >= xpForNextLevel()) {
-            xp -= xpForNextLevel();
-            level++;
-            statPoints += 3;
-            return true;
-        }
-        return false;
-    }
-
-    public boolean spendStatPoint(String stat) {
-        if (statPoints <= 0) return false;
-        switch (stat) {
-            case "strength"     -> strength++;
-            case "agility"      -> agility++;
-            case "endurance"    -> endurance++;
-            case "intelligence" -> intelligence++;
-            case "perception"   -> perception++;
-            default -> { return false; }
-        }
-        statPoints--;
-        return true;
-    }
-
-    // --- NBT ---
-    public CompoundTag toNbt() {
-        CompoundTag tag = new CompoundTag();
-        tag.putString("class", playerClass.name());
-        tag.putInt("level", level);
-        tag.putLong("xp", xp);
-        tag.putInt("statPoints", statPoints);
-        tag.putInt("strength", strength);
-        tag.putInt("agility", agility);
-        tag.putInt("endurance", endurance);
-        tag.putInt("intelligence", intelligence);
-        tag.putInt("perception", perception);
-        tag.putInt("meleeKills", meleeKills);
-        tag.putInt("rangedKills", rangedKills);
-        tag.putInt("damageAbsorbed", damageAbsorbed);
-        tag.putInt("snuckTicks", snuckTicks);
-        tag.putInt("observationTicks", observationTicks);
-        tag.putInt("blocksMinedSlow", blocksMinedSlow);
-        return tag;
-    }
-
-    public static AscendantPlayerData fromNbt(CompoundTag tag) {
-        AscendantPlayerData d = new AscendantPlayerData();
-        try { d.playerClass = PlayerClass.valueOf(tag.getString("class")); }
-        catch (Exception e) { d.playerClass = PlayerClass.NONE; }
-        d.level = tag.getInt("level");
-        d.xp = tag.getLong("xp");
-        d.statPoints = tag.getInt("statPoints");
-        d.strength = tag.getInt("strength");
-        d.agility = tag.getInt("agility");
-        d.endurance = tag.getInt("endurance");
-        d.intelligence = tag.getInt("intelligence");
-        d.perception = tag.getInt("perception");
-        d.meleeKills = tag.getInt("meleeKills");
-        d.rangedKills = tag.getInt("rangedKills");
-        d.damageAbsorbed = tag.getInt("damageAbsorbed");
-        d.snuckTicks = tag.getInt("snuckTicks");
-        d.observationTicks = tag.getInt("observationTicks");
-        d.blocksMinedSlow = tag.getInt("blocksMinedSlow");
-        return d;
-    }
-}
+    public int getBlocksMinedS

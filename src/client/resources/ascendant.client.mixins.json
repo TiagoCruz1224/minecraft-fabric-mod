@@ -3,9 +3,8 @@
 	"package": "com.tiagocruz.ascendant.client.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"AscendantClientMixin"
+		"AscendantClientMixin",
+		"GuiMixin"
 	],
 	"injectors": {
-		"defaultRequire": 1
-	}
-}
+		"defaultReq

@@ -6,19 +6,21 @@ import net.minecraft.client.KeyMapping;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Keybindings do mod Ascendant (lado cliente).
+ * Keybindings do mod Ascendant.
+ *
+ *  K — Menu principal (Perfil / Habilidades)
+ *  H — Toggle HUD de habilidades
+ *  G — Dash
+ *  F — Salto Duplo
+ *  R — Escudo de Energia
+ *  Z — Esquivar
  */
 public class AscendantKeyBindings {
 
-    /** Tecla K — abre o ecrã de stats e poderes */
-    public static KeyMapping OPEN_STATS;
+    public static KeyMapping OPEN_MENU;
+    public static KeyMapping TOGGLE_ABILITY_HUD;
 
-    public static void register() {
-        OPEN_STATS = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-            "key.ascendant.stats",
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_K,
-            "key.categories.ascendant"
-        ));
-    }
-}
+    // 4 habilidades gerais
+    public static KeyMapping ABILITY_DASH;
+    public static KeyMapping ABILITY_DOUBLE_JUMP;
+  

@@ -1,71 +1,55 @@
 package com.tiagocruz.ascendant.client.hud;
 
+import com.tiagocruz.ascendant.client.AscendantFont;
 import com.tiagocruz.ascendant.client.data.ClientPlayerData;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.food.FoodData;
 
 /**
- * HUD mínimo do Ascendant — visível durante o jogo.
+ * HUD principal do Ascendant — substitui os elementos vanilla cancelados pelo GuiMixin.
  *
- * Apenas mostra:
- *   - Notificação de level up (4 segundos, centro do ecrã)
- *   - Indicador de rank/classe discreto no canto inferior (se classe atribuída)
+ * Layout acima da hotbar (da esquerda para a direita, de baixo para cima):
  *
- * O painel completo de stats está agora no ecrã K (AscendantStatsScreen).
+ *   [HOTBAR]                                                    y = screenH-22
+ *   [XP bar vanilla]                                            y = screenH-24
+ *   [❤ HP ████████████ 20/20]  [✦ MP ████████████ 100/100]     y = screenH-37
+ *   [🍗 20  💧 20  🥾 80%  ⚔ 4]                               y = screenH-49
+ *
+ * Canto superior esquerdo: mini indicador de classe/nível
+ * Centro (temporário): notificação de level-up
+ * Lado direito (H toggle): HUD de habilidades
  */
 public class AscendantHud {
 
-    public static void render(GuiGraphics graphics, DeltaTracker delta) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.options.hideGui) return;
-        if (mc.screen != null)  return;
+    // ── Cores ─────────────────────────────────────────────────────────────────
+    private static final int C_HP_BG     = 0xFF1A0000;
+    private static final int C_HP_FILL   = 0xFFCC2222;
+    private static final int C_HP_SHINE  = 0xFFFF5555;
+    private static final int C_HP_LOW    = 0xFFFF2200; // < 30%
 
-        int screenW = mc.getWindow().getGuiScaledWidth();
-        int screenH = mc.getWindow().getGuiScaledHeight();
+    private static final int C_MP_BG     = 0xFF00001A;
+    private static final int C_MP_FILL   = 0xFF2244CC;
+    private static final int C_MP_SHINE  = 0xFF4488FF;
 
-        // ─── Notificação de Level Up (centro do ecrã) ────────────────────────
-        if (ClientPlayerData.isShowingLevelUp()) {
-            int level = ClientPlayerData.getLevel();
-            String msg = "§e✦ NÍVEL " + level + " ALCANÇADO ✦";
-            int textW = mc.font.width(msg);
-            int cx = (screenW - textW) / 2;
-            int cy = screenH / 3;
-            graphics.fill(cx - 10, cy - 5, cx + textW + 10, cy + 15, 0xCC000000);
-            graphics.fill(cx - 10, cy - 5, cx + textW + 10, cy - 4,  0xFFFFDD00); // linha top
-            graphics.fill(cx - 10, cy + 15, cx + textW + 10, cy + 16, 0xFFFFDD00); // linha bottom
-            graphics.drawString(mc.font, Component.literal(msg), cx, cy, 0xFFFF44, true);
-        }
+    private static final int C_BAR_BORDER = 0xFF334466;
 
-        // ─── Indicador discreto de rank (canto superior esquerdo, pequeno) ───
-        if (ClientPlayerData.isClassAssigned()) {
-            renderMiniIndicator(graphics, mc);
-        }
-    }
+    private static final int C_FOOD      = 0xFFDDAA44;
+    private static final int C_WATER     = 0xFF44AADD;
+    private static final int C_FATIGUE   = 0xFF888844;
+    private static final int C_ARMOR     = 0xFFAAAAAA;
+    private static final int C_WHITE     = 0xFFFFFFFF;
+    private static final int C_GRAY      = 0xFF888888;
 
-    private static void renderMiniIndicator(GuiGraphics g, Minecraft mc) {
-        String cls   = ClientPlayerData.getPlayerClass();
-        int    level = ClientPlayerData.getLevel();
-        int    sp    = ClientPlayerData.getStatPoints();
+    // ── Dimensões base ────────────────────────────────────────────────────────
+    // Replicam a posição das barras vanilla (mesma largura que os corações/fome)
+    private static final int BAR_W  = 81;   // largura de cada barra (idem vanilla hearts)
+    private static final int BAR_H  = 6;    // espessura da barra
+    private static final int BAR_Y_OFF = 37; // pixels acima da base do ecrã
 
-        String clsShort = switch (cls) {
-            case "ASSASSIN" -> "§8ASS";
-            case "GUARDIAN" -> "§6GRD";
-            case "MAGE"     -> "§9MAG";
-            case "TITAN"    -> "§cTIT";
-            case "ARCHER"   -> "§aARC";
-            case "HEALER"   -> "§dCUR";
-            case "SUMMONER" -> "§5INV";
-            case "SPECTER"  -> "§7ESP";
-            default         -> "§7???";
-        };
+    // ── Render principal ──────────────────────────────────────────────────────
 
-        String indicator = clsShort + "§8 Nv.§f" + level;
-        if (sp > 0) indicator += " §e[+" + sp + "]";
-
-        int tw = mc.font.width(indicator);
-        g.fill(2, 2, tw + 8, 13, 0x88000000);
-        g.drawString(mc.font, Component.literal(indicator), 4, 4, 0xFFFFFF, false);
-    }
-}
+    public static void render(GuiGraphics g, DeltaTracker delta) {
+        Minecra
