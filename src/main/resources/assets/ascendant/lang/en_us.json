@@ -1,0 +1,23 @@
+{
+  "key.ascendant.stats": "Open Stats Screen",
+  "key.categories.ascendant": "Ascendant",
+  "itemGroup.ascendant.ascendant": "[Ascendant] Items",
+
+  "item.ascendant.shadow_dagger": "Adaga das Sombras",
+  "item.ascendant.bastion_mace": "Maça do Baluarte",
+  "item.ascendant.arcane_staff": "Cajado Arcano",
+  "item.ascendant.titan_hammer": "Martelo do Titã",
+  "item.ascendant.hunter_bow": "Arco do Caçador",
+  "item.ascendant.life_scepter": "Cetro da Vida",
+  "item.ascendant.shadow_tome": "Tomo das Sombras",
+  "item.ascendant.spectral_blade": "Lâmina Espectral",
+
+  "item.ascendant.shadow_cloak": "Capote das Sombras",
+  "item.ascendant.bastion_plate": "Armadura do Baluarte",
+  "item.ascendant.arcane_robe": "Manto Arcano",
+  "item.ascendant.titan_plate": "Corselete do Titã",
+  "item.ascendant.hunter_vest": "Colete do Caçador",
+  "item.ascendant.healer_vestment": "Vestes Sagradas",
+  "item.ascendant.summoner_robe": "Manto Invocador",
+  "item.ascendant.specter_cloak": "Capa Espectral"
+}

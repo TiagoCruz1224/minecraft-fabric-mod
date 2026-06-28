@@ -199,3 +199,84 @@ com.tiagocruz.ascendant (client)
 | `AttachmentRegistry.persistent(toNbt, fromNbt)` | → `.persistent(Codec<T>)` |
 | `SyncPlayerDataPacket` em client source set | Movido para main source set |
 
+
+---
+
+## Sessão 3 — Ecrã K, Ranks, Itens de Classe (28/06/2026)
+
+### Resumo
+
+Remoção do HUD permanente, substituído por um ecrã dedicado na tecla K. Adição do sistema de ranks, distribuição de stat points, framework completo de itens e armaduras por classe com penalidades cross-class.
+
+### Novos ficheiros
+
+**Main source set:**
+
+| Ficheiro | Descrição |
+|----------|-----------|
+| `data/PlayerRank.java` | Enum 7 ranks: Latente → Despertar → Forjado → Élite → Exaltado → Soberano → Ascendente |
+| `network/SpendStatPointPacket.java` | Packet C2S para gastar stat point (nome do stat como string) |
+| `network/ServerNetworking.java` | Atualizado: registar C2S + handler `spendStatPoint`, método `sendClassAssigned` |
+| `item/ClassWeapon.java` | Item com penalidade de ataque 0/35/60% por classe (pares opostos) |
+| `item/ClassArmor.java` | Item de armadura com armorValue e tooltip de debuff |
+| `item/AscendantItems.java` | 8 armas + 8 armaduras, creative tab `[Ascendant]` |
+| `event/ItemClassEvents.java` | `AttackEntityCallback`: falha o ataque se classe errada, aplica Fraqueza 3s |
+
+**Client source set:**
+
+| Ficheiro | Descrição |
+|----------|-----------|
+| `client/AscendantKeyBindings.java` | Tecla K — `key.ascendant.stats` |
+| `client/screen/AscendantStatsScreen.java` | Screen com 2 abas: ATRIBUTOS (rank, nível, XP, 5 stats com botões +) e PODERES (placeholder por classe) |
+| `client/hud/AscendantHud.java` | Reescrito: removido painel permanente, mini-indicador `CLS Lv.X [+N]` e notificação de level-up |
+| `client/AscendantClient.java` | Atualizado: registo de keybindings + tick handler para abrir/fechar ecrã K |
+
+**Assets:**
+
+| Ficheiro | Descrição |
+|----------|-----------|
+| 16× `assets/ascendant/models/item/*.json` | Modelos para armas (handheld) e armaduras (generated) |
+| `assets/ascendant/lang/en_us.json` | Nomes dos itens (PT) + keybinding |
+
+### Sistema de Ranks
+
+| Rank | Nível | Cor |
+|------|-------|-----|
+| Latente | 1–9 | Cinzento §7 |
+| Despertar | 10–24 | Verde claro §a |
+| Forjado | 25–49 | Verde §2 |
+| Élite | 50–74 | Azul claro §b |
+| Exaltado | 75–99 | Azul §9 |
+| Soberano | 100–149 | Roxo §5 |
+| Ascendente | 150+ | Dourado bold §6§l |
+
+### Itens de Classe
+
+**Armas (uma por classe):**
+
+| Item | Classe |
+|------|--------|
+| Adaga das Sombras | ASSASSIN |
+| Maça do Baluarte | GUARDIAN |
+| Cajado Arcano | MAGE |
+| Martelo do Titã | TITAN |
+| Arco do Caçador | ARCHER |
+| Cetro da Vida | HEALER |
+| Tomo das Sombras | SUMMONER |
+| Lâmina Espectral | SPECTER |
+
+**Sistema de penalidades cross-class:**
+- Classe correta: 0% penalidade
+- Classe errada (geral): 35% chance de falhar o ataque
+- Classes opostas (MAGE↔TITAN, ASSASSIN↔GUARDIAN, HEALER↔SPECTER): 60% chance de falhar
+
+### Correções de API 1.21.4
+
+| Erro | Correção |
+|------|----------|
+| `Item.Properties` sem ID | → `new Item.Properties().setId(ResourceKey.create(Registries.ITEM, id))` antes de `new Item(props)` |
+| `applyStatBonuses(player, data)` | → `applyStatBonuses(player)` (método só aceita ServerPlayer) |
+| `ServerNetworking.java` truncado | Ficheiro reescrito por completo |
+| `sendClassAssigned(player)` não encontrado | Adicionado método `sendClassAssigned(ServerPlayer)` que lê a classe dos dados |
+
+---

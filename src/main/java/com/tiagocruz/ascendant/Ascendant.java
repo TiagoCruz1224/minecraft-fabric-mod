@@ -2,7 +2,9 @@ package com.tiagocruz.ascendant;
 
 import com.tiagocruz.ascendant.command.AscendantCommands;
 import com.tiagocruz.ascendant.event.AscendantServerTickEvents;
+import com.tiagocruz.ascendant.event.ItemClassEvents;
 import com.tiagocruz.ascendant.event.PlayerEvents;
+import com.tiagocruz.ascendant.item.AscendantItems;
 import com.tiagocruz.ascendant.network.ServerNetworking;
 import com.tiagocruz.ascendant.registry.AscendantAttachments;
 import net.fabricmc.api.ModInitializer;
@@ -17,11 +19,13 @@ public class Ascendant implements ModInitializer {
     @Override
     public void onInitialize() {
         LOGGER.info("[Ascendant] The System awakens.");
+        AscendantItems.register();
         ServerNetworking.register();
         AscendantAttachments.register();
         PlayerEvents.register();
         AscendantServerTickEvents.register();
         AscendantCommands.register();
+        ItemClassEvents.register();
     }
 
     public static ResourceLocation id(String path) {
