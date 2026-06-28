@@ -1,113 +1,132 @@
 package com.tiagocruz.ascendant.client.hud;
 
-import com.tiagocruz.ascendant.client.AscendantFont;
 import com.tiagocruz.ascendant.client.data.ClientPlayerData;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.food.FoodData;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 /**
- * HUD principal do Ascendant — substitui os elementos vanilla cancelados pelo GuiMixin.
+ * HUD do Ascendant.
  *
- * Layout acima da hotbar (da esquerda para a direita, de baixo para cima):
- *
- *   [HOTBAR]                                                    y = screenH-22
- *   [XP bar vanilla]                                            y = screenH-24
- *   [❤ HP ████████████ 20/20]  [✦ MP ████████████ 100/100]     y = screenH-37
- *   [🍗 20  💧 20  🥾 80%  ⚔ 4]                               y = screenH-49
- *
- * Canto superior esquerdo: mini indicador de classe/nível
- * Centro (temporário): notificação de level-up
- * Lado direito (H toggle): HUD de habilidades
+ * ESQUERDA (corações):  [HP BAR ███ 20/20 ████]
+ * DIREITA  (fome):      [food] n  [xp] n        ← 2 icons por linha
+ *                       [water] n [sat] n
+ *                       [MP BAR ██ 100/100 ███]
  */
 public class AscendantHud {
 
     // ── Cores ─────────────────────────────────────────────────────────────────
-    private static final int C_HP_BG     = 0xFF1A0000;
-    private static final int C_HP_FILL   = 0xFFCC2222;
-    private static final int C_HP_SHINE  = 0xFFFF5555;
-    private static final int C_HP_LOW    = 0xFFFF2200; // < 30%
+    private static final int C_HP_BG    = 0xFF1A0000;
+    private static final int C_HP_FILL  = 0xFFCC2222;
+    private static final int C_HP_SHINE = 0xFFFF5555;
+    private static final int C_HP_LOW   = 0xFFFF2200;
 
-    private static final int C_MP_BG     = 0xFF00001A;
-    private static final int C_MP_FILL   = 0xFF2244CC;
-    private static final int C_MP_SHINE  = 0xFF4488FF;
+    private static final int C_MP_BG    = 0xFF000022;
+    private static final int C_MP_FILL  = 0xFF2244CC;
+    private static final int C_MP_SHINE = 0xFF4488FF;
 
-    private static final int C_BAR_BORDER = 0xFF334466;
+    private static final int C_BORDER   = 0xFF223344;
+    private static final int C_WHITE    = 0xFFFFFFFF;
 
-    private static final int C_FOOD      = 0xFFDDAA44;
-    private static final int C_WATER     = 0xFF44AADD;
-    private static final int C_FATIGUE   = 0xFF888844;
-    private static final int C_ARMOR     = 0xFFAAAAAA;
-    private static final int C_WHITE     = 0xFFFFFFFF;
-    private static final int C_GRAY      = 0xFF888888;
+    // ── Dimensões ─────────────────────────────────────────────────────────────
+    private static final int HP_W  = 91;  // mesmo que vanilla hearts
+    private static final int MP_W  = 81;  // mesmo que vanilla food
+    private static final int BAR_H = 9;   // altura suficiente para texto dentro (font=9)
 
-    // ── Dimensões base ────────────────────────────────────────────────────────
-    // Replicam a posição das barras vanilla (mesma largura que os corações/fome)
-    private static final int BAR_W  = 81;   // largura de cada barra (idem vanilla hearts)
-    private static final int BAR_H  = 6;    // espessura da barra
-    private static final int BAR_Y_OFF = 37; // pixels acima da base do ecrã
+    // Barra de HP/MP fica acima da XP bar vanilla (sh-29 aprox.)
+    // barY = sh-42, bar bottom = sh-33, gap para XP bar = 4px
+    private static final int BAR_Y_OFF = 42;
 
-    // ── Render principal ──────────────────────────────────────────────────────
+    // Icons (item stacks estáticos — sem alocação por frame)
+    private static final ItemStack ICON_FOOD  = new ItemStack(Items.COOKED_BEEF);
+    private static final ItemStack ICON_WATER = new ItemStack(Items.WATER_BUCKET);
+    private static final ItemStack ICON_XP    = new ItemStack(Items.EXPERIENCE_BOTTLE);
+    private static final ItemStack ICON_SAT   = new ItemStack(Items.APPLE);
 
+    // ── Render ────────────────────────────────────────────────────────────────
     public static void render(GuiGraphics g, DeltaTracker delta) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.options.hideGui) return;
-        if (mc.player == null) return;
+        if (mc.options.hideGui || mc.player == null) return;
 
         int sw = mc.getWindow().getGuiScaledWidth();
         int sh = mc.getWindow().getGuiScaledHeight();
-        int baseY = sh - BAR_Y_OFF;
-        int leftX = sw / 2 - 91;
 
-        // ── HP Bar ────────────────────────────────────────────────────────────
+        int hpX  = sw / 2 - 91;   // início da barra HP (alinha com hotbar esq.)
+        int mpX  = sw / 2 + 10;   // início da barra MP (alinha com hotbar dir.)
+        int barY = sh - BAR_Y_OFF;
+
+        // ── HP — esquerda ──────────────────────────────────────────────────────
         float maxHp  = mc.player.getMaxHealth();
         float hp     = mc.player.getHealth();
         float hpFrac = maxHp > 0 ? Math.min(1f, hp / maxHp) : 0f;
-        boolean lowHp = hpFrac < 0.3f;
 
-        g.fill(leftX, baseY, leftX + BAR_W, baseY + BAR_H, C_HP_BG);
-        g.fill(leftX, baseY, leftX + (int)(BAR_W * hpFrac), baseY + BAR_H, lowHp ? C_HP_LOW : C_HP_FILL);
-        g.fill(leftX, baseY, leftX + (int)(BAR_W * hpFrac), baseY + 1, C_HP_SHINE);
-        g.fill(leftX, baseY, leftX + BAR_W, baseY, C_BAR_BORDER);
-        g.fill(leftX, baseY + BAR_H, leftX + BAR_W, baseY + BAR_H + 1, C_BAR_BORDER);
-        g.drawString(mc.font, Component.literal("§c❤ " + (int)hp + "/" + (int)maxHp),
-            leftX, baseY - 9, C_WHITE, true);
+        drawBar(g, mc, hpX, barY, HP_W, BAR_H,
+            C_HP_BG,
+            hpFrac < 0.3f ? C_HP_LOW : C_HP_FILL,
+            C_HP_SHINE,
+            C_BORDER,
+            hpFrac,
+            (int) hp + "/" + (int) maxHp);
 
-        // ── MP Bar ────────────────────────────────────────────────────────────
-        int rightX   = sw / 2 + 10;
+        // ── Stat icons — por cima da barra MP ─────────────────────────────────
+        FoodData food    = mc.player.getFoodData();
+        int foodLvl      = food.getFoodLevel();
+        int waterLvl     = ClientPlayerData.getWaterLevel();
+        int xpLvl        = mc.player.experienceLevel;
+        int satPct       = (int)(food.getSaturationLevel() / 5f * 100f); // 0-100%
+
+        // Duas linhas de 2 icons cada, acima da barra MP
+        // Linha 1 (mais perto da barra):  food | xp
+        // Linha 2 (mais acima):           water | sat
+        int iconGap  = 2;                        // gap entre icon e número
+        int rowGap   = 2;                        // gap vertical entre linhas
+        int iconH    = 9;                        // altura do icon (vamos escalar 16→9)
+        int row1Y    = barY - iconH - rowGap;    // y da linha 1
+        int row2Y    = row1Y - iconH - rowGap;   // y da linha 2
+
+        // Renderizar icons escalados a 9×9 usando pose matrix
+        renderSmallItem(g, ICON_FOOD,  mpX,       row1Y);
+        renderSmallItem(g, ICON_XP,    mpX + 40,  row1Y);
+        renderSmallItem(g, ICON_WATER, mpX,       row2Y);
+        renderSmallItem(g, ICON_SAT,   mpX + 40,  row2Y);
+
+        // Valores ao lado dos icons
+        int textOffY = 1; // centrar verticalmente nos 9px
+        g.drawString(mc.font, Component.literal("§f" + foodLvl),
+            mpX + iconH + iconGap, row1Y + textOffY, C_WHITE, true);
+        g.drawString(mc.font, Component.literal("§f" + xpLvl),
+            mpX + 40 + iconH + iconGap, row1Y + textOffY, C_WHITE, true);
+        g.drawString(mc.font, Component.literal("§f" + waterLvl),
+            mpX + iconH + iconGap, row2Y + textOffY, C_WHITE, true);
+        g.drawString(mc.font, Component.literal("§f" + satPct + "%"),
+            mpX + 40 + iconH + iconGap, row2Y + textOffY, C_WHITE, true);
+
+        // ── MP — direita ───────────────────────────────────────────────────────
         float mana   = ClientPlayerData.getCurrentMana();
         int maxMana  = ClientPlayerData.getMaxMana();
         float mpFrac = maxMana > 0 ? Math.min(1f, mana / maxMana) : 0f;
 
-        g.fill(rightX, baseY, rightX + BAR_W, baseY + BAR_H, C_MP_BG);
-        g.fill(rightX, baseY, rightX + (int)(BAR_W * mpFrac), baseY + BAR_H, C_MP_FILL);
-        g.fill(rightX, baseY, rightX + (int)(BAR_W * mpFrac), baseY + 1, C_MP_SHINE);
-        g.fill(rightX, baseY, rightX + BAR_W, baseY, C_BAR_BORDER);
-        g.fill(rightX, baseY + BAR_H, rightX + BAR_W, baseY + BAR_H + 1, C_BAR_BORDER);
-        g.drawString(mc.font, Component.literal("§9✦ " + (int)mana + "/" + maxMana),
-            rightX, baseY - 9, C_WHITE, true);
+        drawBar(g, mc, mpX, barY, MP_W, BAR_H,
+            C_MP_BG, C_MP_FILL, C_MP_SHINE, C_BORDER,
+            mpFrac,
+            (int) mana + "/" + maxMana);
 
-        // ── Stats row ─────────────────────────────────────────────────────────
-        int foodLvl  = mc.player.getFoodData().getFoodLevel();
-        int armorVal = mc.player.getArmorValue();
-        int waterLvl = ClientPlayerData.getWaterLevel();
-        g.drawString(mc.font,
-            Component.literal("§f🍗 " + foodLvl + "  §b💧 " + waterLvl + "  §7⚔ " + armorVal),
-            leftX, sh - 49, C_GRAY, false);
-
-        // ── Classe / Nível (canto superior esquerdo) ──────────────────────────
+        // ── Classe / Nível — canto sup. esq. ──────────────────────────────────
         String cls = ClientPlayerData.getPlayerClass();
         int lvl = ClientPlayerData.getLevel();
         if (!"NONE".equals(cls)) {
-            g.drawString(mc.font, Component.literal("§b" + cls + " §7Lv." + lvl),
+            g.drawString(mc.font,
+                Component.literal("§b" + cls + " §7Lv." + lvl),
                 6, 6, C_WHITE, true);
         }
 
         // ── Level-up flash ────────────────────────────────────────────────────
         if (ClientPlayerData.isLevelUpDisplayActive()) {
-            String msg = "✦  LEVEL UP!  ✦";
+            String msg = "LEVEL UP!";
             int msgW = mc.font.width(msg);
             float progress = ClientPlayerData.getLevelUpProgress();
             int alpha = (int)(Math.min(1f, progress * 2f) * 255);
@@ -115,5 +134,41 @@ public class AscendantHud {
             g.drawString(mc.font, Component.literal("§e" + msg),
                 (sw - msgW) / 2, sh / 2 - 20, color, true);
         }
+    }
+
+    // ── Barra com texto centrado dentro ───────────────────────────────────────
+    private static void drawBar(GuiGraphics g, Minecraft mc,
+                                int x, int y, int w, int h,
+                                int bgColor, int fillColor, int shineColor,
+                                int borderColor, float frac, String label) {
+        int fillW = (int)(w * frac);
+        // fundo
+        g.fill(x, y, x + w, y + h, bgColor);
+        // preenchimento
+        if (fillW > 0) {
+            g.fill(x, y, x + fillW, y + h, fillColor);
+            g.fill(x, y, x + fillW, y + 1, shineColor);
+        }
+        // bordas
+        g.fill(x - 1, y - 1, x + w + 1, y,         borderColor);
+        g.fill(x - 1, y + h, x + w + 1, y + h + 1, borderColor);
+        g.fill(x - 1, y - 1, x,         y + h + 1, borderColor);
+        g.fill(x + w, y - 1, x + w + 1, y + h + 1, borderColor);
+        // texto centrado dentro da barra (shadow=true para contraste)
+        int labelW = mc.font.width(label);
+        int textX  = x + (w - labelW) / 2;
+        int textY  = y + (h - 9) / 2;  // 9 = font line height
+        g.drawString(mc.font, Component.literal("§f" + label), textX, textY, C_WHITE, true);
+    }
+
+    // ── Render item escalado a 9×9 px ─────────────────────────────────────────
+    private static void renderSmallItem(GuiGraphics g, ItemStack stack, int x, int y) {
+        // Item nativo = 16×16. Escalar para 9×9 ≈ 0.5625×
+        float scale = 9f / 16f;
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0);
+        g.pose().scale(scale, scale, 1f);
+        g.renderItem(stack, 0, 0);
+        g.pose().popPose();
     }
 }

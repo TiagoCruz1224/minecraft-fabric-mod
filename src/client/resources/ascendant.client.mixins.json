@@ -7,4 +7,6 @@
 		"GuiMixin"
 	],
 	"injectors": {
-		"defaultReq
+		"defaultRequire": 1
+	}
+}
