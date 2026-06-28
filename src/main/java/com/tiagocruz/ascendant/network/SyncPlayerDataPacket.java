@@ -45,14 +45,24 @@ public record SyncPlayerDataPacket(
                 buf.writeUtf(pkt.playerClass());
             },
             buf -> new SyncPlayerDataPacket(
-                buf.readInt(),
-                buf.readLong(),
-                buf.readLong(),
-                buf.readInt(),
-                buf.readInt(),
-                buf.readInt(),
-                buf.readInt(),
-                buf.readInt(),
-                buf.readInt(),
-                buf.readInt(),
-                buf.
+                buf.readInt(),   // level
+                buf.readLong(),  // xp
+                buf.readLong(),  // xpToNext
+                buf.readInt(),   // statPoints
+                buf.readInt(),   // strength
+                buf.readInt(),   // agility
+                buf.readInt(),   // endurance
+                buf.readInt(),   // intelligence
+                buf.readInt(),   // perception
+                buf.readInt(),   // vitality
+                buf.readInt(),   // dexterity
+                buf.readInt(),   // wisdom
+                buf.readUtf()    // playerClass
+            )
+        );
+
+    @Override
+    public CustomPacketPayload.Type<SyncPlayerDataPacket> type() {
+        return TYPE;
+    }
+}

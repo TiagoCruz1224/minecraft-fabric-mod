@@ -27,4 +27,10 @@ public class Ascendant implements ModInitializer {
         PlayerEvents.register();
         AscendantServerTickEvents.register();
         AscendantCommands.register();
-        Ite
+        ItemClassEvents.register();
+    }
+
+    public static ResourceLocation id(String path) {
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    }
+}

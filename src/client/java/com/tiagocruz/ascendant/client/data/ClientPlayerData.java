@@ -58,4 +58,32 @@ public class ClientPlayerData {
     public static int getStatPoints() { return statPoints; }
     public static int getStrength() { return strength; }
     public static int getAgility() { return agility; }
-    public static int getEndurance() { ret
+    public static int getEndurance() { return endurance; }
+    public static int getIntelligence() { return intelligence; }
+    public static int getPerception() { return perception; }
+    public static int getVitality() { return vitality; }
+    public static int getDexterity() { return dexterity; }
+    public static int getWisdom() { return wisdom; }
+    public static String getPlayerClass() { return playerClass; }
+    public static boolean isClassAssigned() { return playerClass != null && !playerClass.equals("NONE"); }
+    public static float getCurrentMana() { return currentMana; }
+    public static int getMaxMana() { return maxMana; }
+    public static int getWaterLevel() { return waterLevel; }
+    public static int getMaxWater() { return MAX_WATER; }
+
+    public static void updateMana(float current, int max) {
+        currentMana = current;
+        maxMana = max;
+    }
+
+    public static boolean isLevelUpDisplayActive() {
+        return levelUpTimestamp > 0 &&
+               (System.currentTimeMillis() - levelUpTimestamp) < LEVEL_UP_DISPLAY_MS;
+    }
+
+    public static float getLevelUpProgress() {
+        if (levelUpTimestamp < 0) return 0f;
+        long elapsed = System.currentTimeMillis() - levelUpTimestamp;
+        return 1f - Math.min(1f, (float) elapsed / LEVEL_UP_DISPLAY_MS);
+    }
+}

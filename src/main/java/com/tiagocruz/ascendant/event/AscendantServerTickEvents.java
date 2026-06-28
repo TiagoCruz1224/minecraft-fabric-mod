@@ -25,3 +25,13 @@ public class AscendantServerTickEvents {
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 BehaviorTracker.tick(player);
                 tickManaRegen(player);
+            }
+        }
+    }
+
+    private static void tickManaRegen(ServerPlayer player) {
+        AscendantPlayerData data = PlayerDataManager.get(player);
+        data.regenMana();
+        ServerNetworking.syncManaToClient(player);
+    }
+}

@@ -3,6 +3,7 @@ package com.tiagocruz.ascendant.network;
 import com.tiagocruz.ascendant.ability.ClassAbilities;
 import com.tiagocruz.ascendant.ability.GeneralAbilityHandler;
 import com.tiagocruz.ascendant.data.AscendantPlayerData;
+import com.tiagocruz.ascendant.data.PlayerClass;
 import com.tiagocruz.ascendant.data.PlayerDataManager;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -58,4 +59,12 @@ public class ServerNetworking {
     /** Conveniência: lê a classe do jogador e envia o packet de classe atribuída. */
     public static void sendClassAssigned(ServerPlayer player) {
         AscendantPlayerData data = PlayerDataManager.get(player);
-        String className 
+        PlayerClass pc = data.getPlayerClass();
+        ServerPlayNetworking.send(player, new ClassAssignedPacket(pc.name(), pc.getDisplayName(), pc.isRare()));
+    }
+
+    public static void syncManaToClient(ServerPlayer player) {
+        AscendantPlayerData data = PlayerDataManager.get(player);
+        ServerPlayNetworking.send(player, new SyncManaPacket(data.getCurrentMana(), data.getMaxMana()));
+    }
+}

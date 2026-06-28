@@ -116,4 +116,87 @@ public class AscendantPlayerData {
     public int getDamageAbsorbed() { return damageAbsorbed; }
     public int getSnuckTicks() { return snuckTicks; }
     public int getObservationTicks() { return observationTicks; }
-    public int getBlocksMinedS
+    public int getBlocksMinedSlow() { return blocksMinedSlow; }
+
+    // --- spendStatPoint ---
+    public boolean spendStatPoint(String stat) {
+        if (statPoints <= 0) return false;
+        statPoints--;
+        switch (stat) {
+            case "strength"     -> strength++;
+            case "agility"      -> agility++;
+            case "endurance"    -> endurance++;
+            case "intelligence" -> intelligence++;
+            case "perception"   -> perception++;
+            case "vitality"     -> vitality++;
+            case "dexterity"    -> dexterity++;
+            case "wisdom"       -> wisdom++;
+            default -> { statPoints++; return false; }
+        }
+        return true;
+    }
+
+    // --- XP / Level ---
+    public long xpForNextLevel() {
+        return (long)(100 * Math.pow(1.15, level - 1));
+    }
+
+    public boolean addXp(long amount) {
+        xp += amount;
+        boolean leveledUp = false;
+        while (xp >= xpForNextLevel()) {
+            xp -= xpForNextLevel();
+            level++;
+            statPoints += 3;
+            leveledUp = true;
+        }
+        return leveledUp;
+    }
+
+    // --- NBT ---
+    public static AscendantPlayerData fromNbt(CompoundTag tag) {
+        AscendantPlayerData data = new AscendantPlayerData();
+        try { data.playerClass = PlayerClass.valueOf(tag.getString("class")); } catch (Exception ignored) {}
+        if (tag.contains("level"))          data.level          = tag.getInt("level");
+        if (tag.contains("xp"))             data.xp             = tag.getLong("xp");
+        if (tag.contains("statPoints"))     data.statPoints     = tag.getInt("statPoints");
+        if (tag.contains("strength"))       data.strength       = tag.getInt("strength");
+        if (tag.contains("agility"))        data.agility        = tag.getInt("agility");
+        if (tag.contains("endurance"))      data.endurance      = tag.getInt("endurance");
+        if (tag.contains("intelligence"))   data.intelligence   = tag.getInt("intelligence");
+        if (tag.contains("perception"))     data.perception     = tag.getInt("perception");
+        if (tag.contains("vitality"))       data.vitality       = tag.getInt("vitality");
+        if (tag.contains("dexterity"))      data.dexterity      = tag.getInt("dexterity");
+        if (tag.contains("wisdom"))         data.wisdom         = tag.getInt("wisdom");
+        if (tag.contains("meleeKills"))     data.meleeKills     = tag.getInt("meleeKills");
+        if (tag.contains("rangedKills"))    data.rangedKills    = tag.getInt("rangedKills");
+        if (tag.contains("damageAbsorbed")) data.damageAbsorbed = tag.getInt("damageAbsorbed");
+        if (tag.contains("snuckTicks"))     data.snuckTicks     = tag.getInt("snuckTicks");
+        if (tag.contains("blocksMinedSlow"))data.blocksMinedSlow= tag.getInt("blocksMinedSlow");
+        if (tag.contains("observationTicks"))data.observationTicks=tag.getInt("observationTicks");
+        return data;
+    }
+
+    public CompoundTag toNbt() {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("class",           playerClass.name());
+        tag.putInt("level",              level);
+        tag.putLong("xp",                xp);
+        tag.putInt("statPoints",         statPoints);
+        tag.putInt("strength",           strength);
+        tag.putInt("agility",            agility);
+        tag.putInt("endurance",          endurance);
+        tag.putInt("intelligence",       intelligence);
+        tag.putInt("perception",         perception);
+        tag.putInt("vitality",           vitality);
+        tag.putInt("dexterity",          dexterity);
+        tag.putInt("wisdom",             wisdom);
+        tag.putInt("meleeKills",         meleeKills);
+        tag.putInt("rangedKills",        rangedKills);
+        tag.putInt("damageAbsorbed",     damageAbsorbed);
+        tag.putInt("snuckTicks",         snuckTicks);
+        tag.putInt("blocksMinedSlow",    blocksMinedSlow);
+        tag.putInt("observationTicks",   observationTicks);
+        return tag;
+    }
+}
