@@ -16,6 +16,7 @@ public class ServerNetworking {
         PayloadTypeRegistry.playS2C().register(SyncPlayerDataPacket.TYPE, SyncPlayerDataPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(ClassAssignedPacket.TYPE, ClassAssignedPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(SyncManaPacket.TYPE, SyncManaPacket.CODEC);
+        PayloadTypeRegistry.playS2C().register(SyncShieldPacket.TYPE, SyncShieldPacket.CODEC);
 
         // C2S
         PayloadTypeRegistry.playC2S().register(SpendStatPointPacket.TYPE, SpendStatPointPacket.CODEC);
@@ -66,5 +67,9 @@ public class ServerNetworking {
     public static void syncManaToClient(ServerPlayer player) {
         AscendantPlayerData data = PlayerDataManager.get(player);
         ServerPlayNetworking.send(player, new SyncManaPacket(data.getCurrentMana(), data.getMaxMana()));
+    }
+
+    public static void syncShieldToClient(ServerPlayer player, boolean active, int ticks) {
+        ServerPlayNetworking.send(player, new SyncShieldPacket(active, ticks));
     }
 }

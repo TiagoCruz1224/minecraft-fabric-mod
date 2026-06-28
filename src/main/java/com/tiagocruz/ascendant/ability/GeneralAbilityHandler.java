@@ -5,8 +5,6 @@ import com.tiagocruz.ascendant.data.PlayerDataManager;
 import com.tiagocruz.ascendant.network.ServerNetworking;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -91,15 +89,22 @@ public class GeneralAbilityHandler {
     }
 
     // ── ENERGY SHIELD ─────────────────────────────────────────────────────────
-    // Escudo temporário — reduz dano via resistência IV por 3 segundos.
-    // Usamos o efeito de resistência APENAS aqui (habilidade activa, não passiva).
+    // Escudo visual + redução de dano por 3 segundos.
+    // O efeito de Resistência fica invisível (sem ícone HUD); a animação é feita
+    // no cliente via ShieldRenderer ao receber SyncShieldPacket.
+    private static final int SHIELD_TICKS = 3 * 20; // 60 ticks = 3s
+
     private static boolean executeEnergyShield(ServerPlayer player) {
-        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 3 * 20, 3, false, true));
-        // Partículas de escudo
-        if (player.level() instanceof net.minecraft.server.level.ServerLevel sl) {
-            sl.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD,
-                player.getX(), player.getY() + 1, player.getZ(), 20, 0.5, 0.8, 0.5, 0.05);
-        }
+        // Resistência IV invisível — sem ícone, sem partículas vanilla
+        player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+            net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE,
+            SHIELD_TICKS, 3,
+            false,  // ambient
+            false,  // visible (sem partículas no jogador)
+            false   // showIcon (sem ícone no HUD)
+        ));
+        // Notificar cliente para iniciar animação
+        ServerNetworking.syncShieldToClient(player, true, SHIELD_TICKS);
         return true;
     }
 

@@ -4,7 +4,6 @@ import com.tiagocruz.ascendant.client.data.ClientPlayerData;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -59,12 +58,15 @@ public class AscendantHud {
         int mpX  = sw / 2 + 10;   // início da barra MP (alinha com hotbar dir.)
         int barY = sh - BAR_Y_OFF;
 
+        // Fonte global do mod (Rajdhani custom; fallback para mc.font)
+        net.minecraft.client.gui.Font font = AscendantFont.get(mc);
+
         // ── HP — esquerda ──────────────────────────────────────────────────────
         float maxHp  = mc.player.getMaxHealth();
         float hp     = mc.player.getHealth();
         float hpFrac = maxHp > 0 ? Math.min(1f, hp / maxHp) : 0f;
 
-        drawBar(g, mc, hpX, barY, HP_W, BAR_H,
+        drawBar(g, font, hpX, barY, HP_W, BAR_H,
             C_HP_BG,
             hpFrac < 0.3f ? C_HP_LOW : C_HP_FILL,
             C_HP_SHINE,
@@ -96,13 +98,13 @@ public class AscendantHud {
 
         // Valores ao lado dos icons
         int textOffY = 1; // centrar verticalmente nos 9px
-        g.drawString(mc.font, Component.literal("§f" + foodLvl),
+        g.drawString(font, AscendantFont.text(String.valueOf(foodLvl)),
             mpX + iconH + iconGap, row1Y + textOffY, C_WHITE, true);
-        g.drawString(mc.font, Component.literal("§f" + xpLvl),
+        g.drawString(font, AscendantFont.text(String.valueOf(xpLvl)),
             mpX + 40 + iconH + iconGap, row1Y + textOffY, C_WHITE, true);
-        g.drawString(mc.font, Component.literal("§f" + waterLvl),
+        g.drawString(font, AscendantFont.text(String.valueOf(waterLvl)),
             mpX + iconH + iconGap, row2Y + textOffY, C_WHITE, true);
-        g.drawString(mc.font, Component.literal("§f" + satPct + "%"),
+        g.drawString(font, AscendantFont.text(satPct + "%"),
             mpX + 40 + iconH + iconGap, row2Y + textOffY, C_WHITE, true);
 
         // ── MP — direita ───────────────────────────────────────────────────────
@@ -110,7 +112,7 @@ public class AscendantHud {
         int maxMana  = ClientPlayerData.getMaxMana();
         float mpFrac = maxMana > 0 ? Math.min(1f, mana / maxMana) : 0f;
 
-        drawBar(g, mc, mpX, barY, MP_W, BAR_H,
+        drawBar(g, font, mpX, barY, MP_W, BAR_H,
             C_MP_BG, C_MP_FILL, C_MP_SHINE, C_BORDER,
             mpFrac,
             (int) mana + "/" + maxMana);
@@ -119,25 +121,26 @@ public class AscendantHud {
         String cls = ClientPlayerData.getPlayerClass();
         int lvl = ClientPlayerData.getLevel();
         if (!"NONE".equals(cls)) {
-            g.drawString(mc.font,
-                Component.literal("§b" + cls + " §7Lv." + lvl),
-                6, 6, C_WHITE, true);
+            g.drawString(font,
+                AscendantFont.text(cls + " Lv." + lvl),
+                6, 6, 0xFF55FFFF, true);
         }
 
         // ── Level-up flash ────────────────────────────────────────────────────
         if (ClientPlayerData.isLevelUpDisplayActive()) {
             String msg = "LEVEL UP!";
-            int msgW = mc.font.width(msg);
+            net.minecraft.network.chat.Component msgComp = AscendantFont.text(msg);
+            int msgW = font.width(msgComp);
             float progress = ClientPlayerData.getLevelUpProgress();
             int alpha = (int)(Math.min(1f, progress * 2f) * 255);
             int color = (alpha << 24) | 0xFFDD00;
-            g.drawString(mc.font, Component.literal("§e" + msg),
+            g.drawString(font, msgComp,
                 (sw - msgW) / 2, sh / 2 - 20, color, true);
         }
     }
 
     // ── Barra com texto centrado dentro ───────────────────────────────────────
-    private static void drawBar(GuiGraphics g, Minecraft mc,
+    private static void drawBar(GuiGraphics g, net.minecraft.client.gui.Font font,
                                 int x, int y, int w, int h,
                                 int bgColor, int fillColor, int shineColor,
                                 int borderColor, float frac, String label) {
@@ -155,10 +158,11 @@ public class AscendantHud {
         g.fill(x - 1, y - 1, x,         y + h + 1, borderColor);
         g.fill(x + w, y - 1, x + w + 1, y + h + 1, borderColor);
         // texto centrado dentro da barra (shadow=true para contraste)
-        int labelW = mc.font.width(label);
+        net.minecraft.network.chat.Component labelComp = AscendantFont.text(label);
+        int labelW = font.width(labelComp);
         int textX  = x + (w - labelW) / 2;
-        int textY  = y + (h - 9) / 2;  // 9 = font line height
-        g.drawString(mc.font, Component.literal("§f" + label), textX, textY, C_WHITE, true);
+        int textY  = y + (h - font.lineHeight) / 2;
+        g.drawString(font, labelComp, textX, textY, C_WHITE, true);
     }
 
     // ── Render item escalado a 9×9 px ─────────────────────────────────────────
