@@ -12,39 +12,28 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Barra de habilidades estilo Solo Leveling: Reawakening.
+ * Barra de habilidades — substitui o hotbar vanilla quando activa.
  *
- * Layout: 9 slots acima da hotbar vanilla, centrados.
- *   Slots 1-4 : habilidades gerais (Dash, Salto, Escudo, Esquiva)
- *   Slots 5-7 : habilidades da classe do jogador
- *   Slots 8-9 : reservados (futuro: dual-class)
- *
- * Controlos:
- *   R — toggle (mostra/esconde)
- *   1-9 — selecciona slot (espelha hotbar vanilla)
- *   Z — usa habilidade no slot seleccionado
+ * R  — toggle (mostra/esconde; restaura vanilla quando escondida)
+ * 1-9 — selecciona slot (espelha hotbar vanilla)
+ * Z  — usa habilidade no slot seleccionado
  */
 public class AbilityHotbar {
 
-    // ── Estado ────────────────────────────────────────────────────────────────
     private static boolean visible = false;
 
-    /** Cooldowns locais: endTime e totalDuration por abilityId */
     private static final Map<String, long[]> COOLDOWNS = new HashMap<>();
 
-    public static boolean isVisible() { return visible; }
-    public static void toggle() { visible = !visible; }
-    public static void setVisible(boolean v) { visible = v; }
+    public static boolean isVisible()         { return visible; }
+    public static void toggle()               { visible = !visible; }
+    public static void setVisible(boolean v)  { visible = v; }
 
-    /** Inicia um cooldown local (estimativa visual — sem reducao de SAB). */
     public static void startCooldown(String abilityId, long durationMs) {
         COOLDOWNS.put(abilityId, new long[]{
-            System.currentTimeMillis() + durationMs,
-            durationMs
+            System.currentTimeMillis() + durationMs, durationMs
         });
     }
 
-    /** Habilidade no slot dado, considerando a classe do jogador. Slot 0-8. */
     public static AscendantAbility getAbilityForSlot(int slot) {
         return switch (slot) {
             case 0 -> AbilityRegistry.DASH;
@@ -55,18 +44,15 @@ public class AbilityHotbar {
                 try {
                     PlayerClass cls = PlayerClass.valueOf(ClientPlayerData.getPlayerClass());
                     yield AbilityRegistry.getClassAbility(cls, slot - 4);
-                } catch (Exception e) {
-                    yield null;
-                }
+                } catch (Exception e) { yield null; }
             }
             default -> null;
         };
     }
 
-    /** ID da habilidade actualmente seleccionada (slot = hotbar vanilla). */
     public static String getSelectedAbilityId(Minecraft mc) {
         if (mc.player == null) return null;
-        int slot = mc.player.getInventory().selected; // 0-8
+        int slot = mc.player.getInventory().selected;
         AscendantAbility ab = getAbilityForSlot(slot);
         return ab != null ? ab.id() : null;
     }
@@ -75,135 +61,96 @@ public class AbilityHotbar {
 
     public static void render(GuiGraphics g, Minecraft mc) {
         if (!visible) return;
-        if (mc.options.hideGui) return;
-        if (mc.player == null) return;
+        if (mc.options.hideGui || mc.player == null) return;
 
         int screenW = mc.getWindow().getGuiScaledWidth();
         int screenH = mc.getWindow().getGuiScaledHeight();
 
-        int slotSize = 20;
-        int gap      = 2;
-        int totalW   = 9 * slotSize + 8 * gap; // 196
-        int startX   = screenW / 2 - totalW / 2;
-        int startY   = screenH - 22; // mesmo Y que o hotbar vanilla
+        final int SLOT  = 22;   // mesmo tamanho do slot vanilla (20px interior + 1px borda cada lado)
+        final int GAP   = 1;
+        int totalW = 9 * SLOT + 8 * GAP;   // 206
+        int startX = screenW / 2 - totalW / 2;
+        int startY = screenH - SLOT - 1;    // alinha com vanilla hotbar
 
-        int selectedSlot = mc.player.getInventory().selected; // 0-8
+        int selectedSlot = mc.player.getInventory().selected;
 
-        // ── Fundo do painel ─────────────────────────────────────────────────
-        // Cobre exactamente a área do hotbar vanilla + título acima
-        g.fill(startX - 3, startY - 16,
-               startX + totalW + 3, startY + slotSize + 2,
-               0xCC05090F);
-        // Linha decorativa no topo
-        g.fill(startX - 3, startY - 16,
-               startX + totalW + 3, startY - 15,
-               0xFF1A3A6A);
-
-        // Título pequeno acima dos slots
-        String title = "§9HABILIDADES §8| §7Z §8usar · §7R §8fechar";
-        int titleW = mc.font.width(title);
-        g.drawString(mc.font, Component.literal(title),
-            startX + totalW / 2 - titleW / 2, startY - 13, 0xFFFFFFFF, false);
-
-        // ── Slots ───────────────────────────────────────────────────────────
         for (int i = 0; i < 9; i++) {
-            int sx = startX + i * (slotSize + gap);
+            int sx = startX + i * (SLOT + GAP);
             AscendantAbility ab = getAbilityForSlot(i);
             boolean selected = (i == selectedSlot);
 
-            if (ab == null) {
-                // Slot vazio
-                int emptyBg = selected ? 0xAA1A2230 : 0xAA0D1018;
-                g.fill(sx, startY, sx + slotSize, startY + slotSize, emptyBg);
-                drawBorder(g, sx, startY, slotSize, selected ? 0xFF2A3A50 : 0xFF151E28);
-                // Numero do slot
-                g.drawString(mc.font, Component.literal("§8" + (i + 1)),
-                    sx + 2, startY + 2, 0xFF444455, false);
-                continue;
+            // ── Fundo do slot ────────────────────────────────────────────────
+            int bgColor = selected
+                ? 0xCC1A2A3A
+                : (ab != null ? 0xCC0D1520 : 0xBB080D14);
+            g.fill(sx, startY, sx + SLOT, startY + SLOT, bgColor);
+
+            // ── Borda ────────────────────────────────────────────────────────
+            int borderColor = selected
+                ? 0xFF66AAFF
+                : (ab != null ? 0xFF1E3A5A : 0xFF111A22);
+            drawBorder(g, sx, startY, SLOT, borderColor);
+
+            // Borda extra (glow) no slot seleccionado
+            if (selected) {
+                drawBorder(g, sx - 1, startY - 1, SLOT + 2, 0x4466AAFF);
             }
 
-            // Cor de fundo por tipo de habilidade
-            int bgColor = ab.isGeneral()
-                ? (selected ? 0xAA0D1B2A : 0xAA080F1A)
-                : classSlotColor(ClientPlayerData.getPlayerClass(), selected);
+            // ── Número do slot (canto sup esq) ──────────────────────────────
+            String num = String.valueOf(i + 1);
+            g.drawString(mc.font, Component.literal("§8" + num), sx + 2, startY + 2, 0xFFFFFFFF, false);
 
-            g.fill(sx, startY, sx + slotSize, startY + slotSize, bgColor);
-            drawBorder(g, sx, startY, slotSize,
-                selected ? 0xFF55AAFF : 0xFF1A3050);
+            if (ab == null) continue;
 
-            // Numero do slot (canto superior esquerdo)
-            g.drawString(mc.font, Component.literal("§7" + (i + 1)),
-                sx + 2, startY + 2, 0xFF888899, false);
-
-            // Icone da habilidade (centrado)
+            // ── Ícone da habilidade (centrado) ───────────────────────────────
             int iconColor = ab.isGeneral()
                 ? 0xFF44AAFF
                 : classIconColor(ClientPlayerData.getPlayerClass());
-            g.drawString(mc.font, Component.literal(ab.icon()),
-                sx + slotSize / 2 - 3, startY + 8, iconColor, true);
 
-            // ── Cooldown overlay ────────────────────────────────────────────
+            // Ícone (texto Unicode)
+            String icon = ab.icon();
+            int iconW = mc.font.width(icon);
+            g.drawString(mc.font, Component.literal(icon),
+                sx + SLOT / 2 - iconW / 2,
+                startY + SLOT / 2 - 4,
+                iconColor, true);
+
+            // ── Cooldown overlay ─────────────────────────────────────────────
             long[] cd = COOLDOWNS.get(ab.id());
             boolean onCd = cd != null && System.currentTimeMillis() < cd[0];
             if (onCd) {
                 long remaining = cd[0] - System.currentTimeMillis();
                 float frac = (float) remaining / cd[1];
-                int overlayH = (int)(slotSize * frac);
-                g.fill(sx + 1, startY + 1, sx + slotSize - 1, startY + 1 + overlayH, 0xBB000022);
+                int overlayH = (int)((SLOT - 2) * frac);
+                g.fill(sx + 1, startY + 1, sx + SLOT - 1, startY + 1 + overlayH, 0xBB000033);
 
-                // Texto de contagem
-                String cdStr = remaining >= 1000
-                    ? (remaining / 1000 + 1) + "s"
-                    : remaining / 100 * 100 + "ms";  // fallback
-                // Just show seconds
                 String cdText = String.valueOf(remaining / 1000 + 1);
                 int cdW = mc.font.width(cdText);
                 g.drawString(mc.font, Component.literal("§f" + cdText),
-                    sx + slotSize / 2 - cdW / 2, startY + 7, 0xFFFFFFFF, true);
+                    sx + SLOT / 2 - cdW / 2, startY + SLOT / 2 - 4, 0xFFFFFFFF, true);
             }
 
-            // ── Mana insuficiente — tint vermelho ──────────────────────────
+            // ── Mana insuficiente — tint vermelho ────────────────────────────
             if (!onCd && ClientPlayerData.getCurrentMana() < ab.manaCost()) {
-                g.fill(sx + 1, startY + 1, sx + slotSize - 1, startY + slotSize - 1, 0x55AA0000);
+                g.fill(sx + 1, startY + 1, sx + SLOT - 1, startY + SLOT - 1, 0x55AA0000);
             }
         }
 
-        // ── Info da habilidade seleccionada ─────────────────────────────────
+        // ── Nome da habilidade seleccionada (tooltip compacto acima do slot) ──
         AscendantAbility sel = getAbilityForSlot(selectedSlot);
         if (sel != null) {
-            boolean onCd = COOLDOWNS.containsKey(sel.id())
-                && System.currentTimeMillis() < COOLDOWNS.get(sel.id())[0];
-
-            String cdInfo = onCd
-                ? " §8(" + (COOLDOWNS.get(sel.id())[0] - System.currentTimeMillis()) / 1000 + "s)"
-                : "";
-            String manaInfo = " §9" + sel.manaCost() + " §7mana";
-            String info = "§f" + sel.displayName() + cdInfo + manaInfo;
-
-            int infoW = mc.font.width(info);
-            // Mostrar acima do painel (acima do título)
-            g.drawString(mc.font, Component.literal(info),
-                screenW / 2 - infoW / 2, startY - 27, 0xFFFFFFFF, true);
+            int slotCenterX = startX + selectedSlot * (SLOT + GAP) + SLOT / 2;
+            String name = sel.displayName() + " §8(" + sel.manaCost() + " mana)";
+            int nameW = mc.font.width(name);
+            int tx = slotCenterX - nameW / 2;
+            int ty = startY - 12;
+            // Fundo do tooltip
+            g.fill(tx - 2, ty - 1, tx + nameW + 2, ty + 9, 0xBB000000);
+            g.drawString(mc.font, Component.literal(name), tx, ty, 0xFFFFFFFF, true);
         }
     }
 
-    // ── Helpers de cor ────────────────────────────────────────────────────────
-
-    private static int classSlotColor(String cls, boolean selected) {
-        int base = switch (cls) {
-            case "ASSASSIN" -> 0x3D1A55;
-            case "GUARDIAN" -> 0x2A3040;
-            case "MAGE"     -> 0x2A1040;
-            case "TITAN"    -> 0x401010;
-            case "ARCHER"   -> 0x103020;
-            case "HEALER"   -> 0x0D1E35;
-            case "SUMMONER" -> 0x302010;
-            case "SPECTER"  -> 0x1E1E28;
-            default         -> 0x0D1B2A;
-        };
-        int alpha = selected ? 0xBB000000 : 0x88000000;
-        return (int)(alpha | base);
-    }
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static int classIconColor(String cls) {
         return switch (cls) {
@@ -220,6 +167,9 @@ public class AbilityHotbar {
     }
 
     private static void drawBorder(GuiGraphics g, int x, int y, int size, int color) {
-        g.fill(x,          y,          x + size,     y + 1,        color); // topo
-        g.fill(x,          y + size - 1, x + size,   y + size,     color); // baixo
-        g.fill(x,          y, 
+        g.fill(x,          y,              x + size, y + 1,        color);
+        g.fill(x,          y + size - 1,  x + size, y + size,      color);
+        g.fill(x,          y,              x + 1,    y + size,      color);
+        g.fill(x + size - 1, y,           x + size, y + size,      color);
+    }
+}

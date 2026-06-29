@@ -120,4 +120,10 @@ public class GeneralAbilityHandler {
         // Esquiva para a esquerda por padrão; podes adicionar lógica de direcção depois
         double dodgeX = -look.z * 1.6;
         double dodgeZ =  look.x * 1.6;
-        player.setDeltaMovement(dodgeX
+        player.setDeltaMovement(dodgeX, player.getDeltaMovement().y + 0.1, dodgeZ);
+        player.hurtMarked = true;
+        // Invulnerabilidade breve (10 ticks = 0.5s)
+        player.invulnerableTime = 10;
+        return true;
+    }
+}

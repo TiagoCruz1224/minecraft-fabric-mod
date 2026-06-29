@@ -10,23 +10,15 @@ import org.lwjgl.glfw.GLFW;
  *
  *  K — Menu principal (Perfil / Habilidades)
  *  H — Toggle painel de habilidades (info lateral)
- *  G — Dash (atalho directo)
- *  F — Salto Duplo (atalho directo)
- *  R — Toggle barra de habilidades (estilo Solo Leveling: Reawakening)
- *  Z — Usar habilidade seleccionada na barra
+ *  R — Toggle barra de habilidades (mostra/esconde)
+ *  Z — Usar habilidade seleccionada (slot activo no 1-9)
  */
 public class AscendantKeyBindings {
 
     public static KeyMapping OPEN_MENU;
     public static KeyMapping TOGGLE_ABILITY_HUD;
-
-    // Atalhos directos para habilidades de movimento
-    public static KeyMapping ABILITY_DASH;
-    public static KeyMapping ABILITY_DOUBLE_JUMP;
-
-    // Barra de habilidades estilo SL:Reawakening
-    public static KeyMapping TOGGLE_ABILITY_HOTBAR;  // R — mostra/esconde barra
-    public static KeyMapping USE_SELECTED_ABILITY;   // Z — usa habilidade seleccionada
+    public static KeyMapping TOGGLE_ABILITY_HOTBAR;  // R
+    public static KeyMapping USE_SELECTED_ABILITY;   // Z
 
     public static void register() {
         OPEN_MENU = KeyBindingHelper.registerKeyBinding(new KeyMapping(
@@ -36,14 +28,6 @@ public class AscendantKeyBindings {
         TOGGLE_ABILITY_HUD = KeyBindingHelper.registerKeyBinding(new KeyMapping(
             "key.ascendant.toggle_hud", InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_H, "key.categories.ascendant"
-        ));
-        ABILITY_DASH = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-            "key.ascendant.dash", InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_G, "key.categories.ascendant"
-        ));
-        ABILITY_DOUBLE_JUMP = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-            "key.ascendant.double_jump", InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_F, "key.categories.ascendant"
         ));
         TOGGLE_ABILITY_HOTBAR = KeyBindingHelper.registerKeyBinding(new KeyMapping(
             "key.ascendant.toggle_ability_hotbar", InputConstants.Type.KEYSYM,

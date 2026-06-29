@@ -1,12 +1,12 @@
 @echo off
 cd /d C:\Users\tiago\minecraft-fabric-mod
 del .git\index.lock 2>nul
-del cleanup.bat 2>nul
-git rm --cached build-output.log 2>nul
+del .git\HEAD.lock 2>nul
 git add -A
-git commit -m "feat: ability hotbar 9-slot SL:Reawakening style (R=toggle, Z=use); 24 class abilities 8 classes; keybind redesign; fix MobEffects 1.21.4 renames + Wolf API + ALL_ABILITIES; DEVLOG sessao 7"
+git commit -m "fix: HUD redesign - HP/MP bars top-left, ability hotbar limpo; remove G/F keybinds (apenas Z+1-9)"
 echo.
 echo Commit feito! A fazer push...
 git push
 echo.
-echo Concluido
+echo Concluido!
+pause

@@ -23,11 +23,10 @@ public class AscendantClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         AscendantKeyBindings.register();
-        ShieldRenderer.register(); // render hook da esfera 3D
+        ShieldRenderer.register();
 
-        // ─── Packets recebidos do servidor ────────────────────────────────────
+        // ─── Packets recebidos do servidor ─────────────────────────────────
 
-        // Sync stats
         ClientPlayNetworking.registerGlobalReceiver(
             SyncPlayerDataPacket.TYPE,
             (payload, context) -> context.client().execute(() ->
@@ -41,7 +40,6 @@ public class AscendantClient implements ClientModInitializer {
             )
         );
 
-        // Sync mana
         ClientPlayNetworking.registerGlobalReceiver(
             SyncManaPacket.TYPE,
             (payload, context) -> context.client().execute(() ->
@@ -49,7 +47,6 @@ public class AscendantClient implements ClientModInitializer {
             )
         );
 
-        // Classe atribuida — overlay dramatico
         ClientPlayNetworking.registerGlobalReceiver(
             ClassAssignedPacket.TYPE,
             (payload, context) -> context.client().execute(() ->
@@ -57,7 +54,6 @@ public class AscendantClient implements ClientModInitializer {
             )
         );
 
-        // Escudo de energia — activar/desactivar animacao cliente
         ClientPlayNetworking.registerGlobalReceiver(
             SyncShieldPacket.TYPE,
             (payload, context) -> context.client().execute(() -> {
@@ -66,18 +62,18 @@ public class AscendantClient implements ClientModInitializer {
             })
         );
 
-        // ─── HUD ─────────────────────────────────────────────────────────────
+        // ─── HUD ───────────────────────────────────────────────────────────
         HudRenderCallback.EVENT.register((g, delta) -> {
             AscendantHud.render(g, delta);
             AbilityHud.render(g, Minecraft.getInstance());
             AbilityHotbar.render(g, Minecraft.getInstance());
         });
 
-        // ─── Tick: escudo + teclas ───────────────────────────────────────────
+        // ─── Tick: teclas ──────────────────────────────────────────────────
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             ShieldRenderer.tick();
 
-            // K — abrir menu
+            // K — menu principal
             while (AscendantKeyBindings.OPEN_MENU.consumeClick()) {
                 client.setScreen(new MainMenuScreen());
             }
@@ -87,32 +83,18 @@ public class AscendantClient implements ClientModInitializer {
                 AbilityHud.toggle();
             }
 
-            // G — Dash (atalho directo)
-            while (AscendantKeyBindings.ABILITY_DASH.consumeClick()) {
-                ClientPlayNetworking.send(new UseAbilityPacket("dash"));
-                AbilityHotbar.startCooldown("dash", 8_000L);
-            }
-
-            // F — Salto Duplo (atalho directo)
-            while (AscendantKeyBindings.ABILITY_DOUBLE_JUMP.consumeClick()) {
-                ClientPlayNetworking.send(new UseAbilityPacket("double_jump"));
-                AbilityHotbar.startCooldown("double_jump", 3_000L);
-            }
-
             // R — toggle barra de habilidades
             while (AscendantKeyBindings.TOGGLE_ABILITY_HOTBAR.consumeClick()) {
                 AbilityHotbar.toggle();
             }
 
-            // Z — usar habilidade seleccionada na barra
+            // Z — usar habilidade seleccionada (único trigger de habilidades)
             while (AscendantKeyBindings.USE_SELECTED_ABILITY.consumeClick()) {
                 String abilityId = AbilityHotbar.getSelectedAbilityId(client);
                 if (abilityId != null) {
                     ClientPlayNetworking.send(new UseAbilityPacket(abilityId));
-                    // Cooldown local (visual — estimativa sem reducao de SAB)
                     var ab = com.tiagocruz.ascendant.ability.AbilityRegistry.getById(abilityId);
                     if (ab != null) AbilityHotbar.startCooldown(abilityId, ab.cooldownMs());
-                    // Shield especial: activar renderer imediatamente (feedback rapido)
                     if ("energy_shield".equals(abilityId)) ShieldRenderer.activate(60);
                 }
             }
