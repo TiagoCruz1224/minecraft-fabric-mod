@@ -9,5 +9,4 @@ echo.
 echo Commit feito! A fazer push...
 git push
 echo.
-echo Concluido!
-pause
+echo Concluido

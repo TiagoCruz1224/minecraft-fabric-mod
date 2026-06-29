@@ -1,5 +1,6 @@
 package com.tiagocruz.ascendant.client.mixin;
 
+import com.tiagocruz.ascendant.client.hud.AbilityHotbar;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.player.Player;
@@ -14,7 +15,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Assinaturas verificadas via bytecode da Gui.class (Mojang mappings 1.21.4):
  *   renderPlayerHealth(GuiGraphics)V
  *   renderFood(GuiGraphics, Player, int, int)V
- *   renderArmor(GuiGraphics, Player, int, int, int, int)V
+ *   renderHotbar(GuiGraphics)V
+ *   renderItemHotbar(GuiGraphics)V
  */
 @Mixin(Gui.class)
 public class GuiMixin {
@@ -22,7 +24,6 @@ public class GuiMixin {
     /**
      * Cancela renderPlayerHealth — o método de topo que orquestra corações,
      * corações de absorção e armadura.
-     * Assinatura: (Lnet/minecraft/client/gui/GuiGraphics;)V
      */
     @Inject(method = "renderPlayerHealth(Lnet/minecraft/client/gui/GuiGraphics;)V",
             at = @At("HEAD"), cancellable = true)
@@ -31,8 +32,7 @@ public class GuiMixin {
     }
 
     /**
-     * Cancela renderFood (chamado da layer de fome).
-     * Assinatura: (Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/entity/player/Player;II)V
+     * Cancela renderFood.
      */
     @Inject(method = "renderFood(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/entity/player/Player;II)V",
             at = @At("HEAD"), cancellable = true)
@@ -40,7 +40,10 @@ public class GuiMixin {
         ci.cancel();
     }
 
-    // renderArmor é um método static em Gui 1.21.4 — é chamado internamente por
-    // renderPlayerHealth, que já cancelamos acima, por isso não é necessário
-    // um injector separado para renderArmor.
-}
+    /**
+     * Cancela o fundo do hotbar vanilla (sprite da textura) quando a barra de
+     * habilidades está activa. R toggle → volta ao hotbar normal.
+     */
+    @Inject(method = "renderHotbar(Lnet/minecraft/client/gui/GuiGraphics;)V",
+            at = @At("HEAD"), cancellable = true)
+    private void ascendant$cancelHotbar(GuiGraphic

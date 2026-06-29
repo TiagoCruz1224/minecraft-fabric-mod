@@ -81,28 +81,29 @@ public class AbilityHotbar {
         int screenW = mc.getWindow().getGuiScaledWidth();
         int screenH = mc.getWindow().getGuiScaledHeight();
 
-        int slotSize = 22;
+        int slotSize = 20;
         int gap      = 2;
-        int totalW   = 9 * slotSize + 8 * gap; // 214
+        int totalW   = 9 * slotSize + 8 * gap; // 196
         int startX   = screenW / 2 - totalW / 2;
-        int startY   = screenH - 52; // acima da hotbar vanilla
+        int startY   = screenH - 22; // mesmo Y que o hotbar vanilla
 
         int selectedSlot = mc.player.getInventory().selected; // 0-8
 
         // ── Fundo do painel ─────────────────────────────────────────────────
-        g.fill(startX - 3, startY - 14,
-               startX + totalW + 3, startY + slotSize + 3,
+        // Cobre exactamente a área do hotbar vanilla + título acima
+        g.fill(startX - 3, startY - 16,
+               startX + totalW + 3, startY + slotSize + 2,
                0xCC05090F);
-        // Linha de topo decorativa
-        g.fill(startX - 3, startY - 14,
-               startX + totalW + 3, startY - 13,
+        // Linha decorativa no topo
+        g.fill(startX - 3, startY - 16,
+               startX + totalW + 3, startY - 15,
                0xFF1A3A6A);
 
-        // Titulo
-        String title = "§b[R] §9HABILIDADES §7— §fZ §7para usar";
+        // Título pequeno acima dos slots
+        String title = "§9HABILIDADES §8| §7Z §8usar · §7R §8fechar";
         int titleW = mc.font.width(title);
         g.drawString(mc.font, Component.literal(title),
-            startX + totalW / 2 - titleW / 2, startY - 11, 0xFFFFFFFF, false);
+            startX + totalW / 2 - titleW / 2, startY - 13, 0xFFFFFFFF, false);
 
         // ── Slots ───────────────────────────────────────────────────────────
         for (int i = 0; i < 9; i++) {
@@ -180,8 +181,9 @@ public class AbilityHotbar {
             String info = "§f" + sel.displayName() + cdInfo + manaInfo;
 
             int infoW = mc.font.width(info);
+            // Mostrar acima do painel (acima do título)
             g.drawString(mc.font, Component.literal(info),
-                screenW / 2 - infoW / 2, startY + slotSize + 5, 0xFFFFFFFF, true);
+                screenW / 2 - infoW / 2, startY - 27, 0xFFFFFFFF, true);
         }
     }
 
@@ -220,7 +222,4 @@ public class AbilityHotbar {
     private static void drawBorder(GuiGraphics g, int x, int y, int size, int color) {
         g.fill(x,          y,          x + size,     y + 1,        color); // topo
         g.fill(x,          y + size - 1, x + size,   y + size,     color); // baixo
-        g.fill(x,          y,          x + 1,         y + size,     color); // esquerda
-        g.fill(x + size - 1, y,        x + size,      y + size,     color); // direita
-    }
-}
+        g.fill(x,          y, 
