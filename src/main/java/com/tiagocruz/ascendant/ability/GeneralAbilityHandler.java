@@ -46,7 +46,11 @@ public class GeneralAbilityHandler {
             return;
         }
 
-        // Executar habilidade
+        // Executar habilidade — delegar para ClassAbilityHandler se nao for geral
+        if (!AbilityRegistry.isGeneralAbility(abilityId)) {
+            ClassAbilityHandler.handle(player, abilityId);
+            return;
+        }
         boolean executed = switch (abilityId) {
             case "dash"          -> executeDash(player);
             case "double_jump"   -> executeDoubleJump(player);

@@ -9,22 +9,24 @@ import org.lwjgl.glfw.GLFW;
  * Keybindings do mod Ascendant.
  *
  *  K — Menu principal (Perfil / Habilidades)
- *  H — Toggle HUD de habilidades
- *  G — Dash
- *  F — Salto Duplo
- *  R — Escudo de Energia
- *  Z — Esquivar
+ *  H — Toggle painel de habilidades (info lateral)
+ *  G — Dash (atalho directo)
+ *  F — Salto Duplo (atalho directo)
+ *  R — Toggle barra de habilidades (estilo Solo Leveling: Reawakening)
+ *  Z — Usar habilidade seleccionada na barra
  */
 public class AscendantKeyBindings {
 
     public static KeyMapping OPEN_MENU;
     public static KeyMapping TOGGLE_ABILITY_HUD;
 
-    // 4 habilidades gerais
+    // Atalhos directos para habilidades de movimento
     public static KeyMapping ABILITY_DASH;
     public static KeyMapping ABILITY_DOUBLE_JUMP;
-    public static KeyMapping ABILITY_SHIELD;
-    public static KeyMapping ABILITY_DODGE;
+
+    // Barra de habilidades estilo SL:Reawakening
+    public static KeyMapping TOGGLE_ABILITY_HOTBAR;  // R — mostra/esconde barra
+    public static KeyMapping USE_SELECTED_ABILITY;   // Z — usa habilidade seleccionada
 
     public static void register() {
         OPEN_MENU = KeyBindingHelper.registerKeyBinding(new KeyMapping(
@@ -43,12 +45,12 @@ public class AscendantKeyBindings {
             "key.ascendant.double_jump", InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_F, "key.categories.ascendant"
         ));
-        ABILITY_SHIELD = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-            "key.ascendant.shield", InputConstants.Type.KEYSYM,
+        TOGGLE_ABILITY_HOTBAR = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+            "key.ascendant.toggle_ability_hotbar", InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_R, "key.categories.ascendant"
         ));
-        ABILITY_DODGE = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-            "key.ascendant.dodge", InputConstants.Type.KEYSYM,
+        USE_SELECTED_ABILITY = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+            "key.ascendant.use_selected_ability", InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_Z, "key.categories.ascendant"
         ));
     }

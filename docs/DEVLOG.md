@@ -4,6 +4,56 @@ Documento de progresso técnico do mod. Atualizado a cada sessão de desenvolvim
 
 ---
 
+## Sessão 7 — Barra de Habilidades + 24 Habilidades de Classe (29/06/2026)
+
+### Resumo
+
+Implementação completa do sistema de habilidades estilo **Solo Leveling: Reawakening**: barra de 9 slots acima do hotbar vanilla, toggle com **R**, uso com **Z**, seleção por teclas 1-9. 24 habilidades de classe (3 por classe × 8 classes) adicionadas ao servidor. Keybinds redesenhados.
+
+### Keybinds Novos
+
+| Tecla | Ação |
+|-------|------|
+| R | Toggle barra de habilidades |
+| Z | Usar habilidade selecionada |
+| G | Dash (atalho direto) |
+| F | Salto Duplo (atalho direto) |
+
+### Mudanças
+
+| Ficheiro | Alteração |
+|----------|-----------|
+| `client/AscendantKeyBindings.java` | R → `TOGGLE_ABILITY_HOTBAR`, Z → `USE_SELECTED_ABILITY` (Energy Shield e Dodge movidos para slots da barra) |
+| `ability/AbilityRegistry.java` | Reescrito: 4 habilidades gerais nos slots 0-3; 24 habilidades de classe (3/classe × 8 classes); `CLASS_ABILITIES: Map<PlayerClass, List<AscendantAbility>>`; métodos `isGeneralAbility`, `getClassAbilities`, `getClassAbility`, `allAbilities`, `ALL_ABILITIES` |
+| `ability/ClassAbilityHandler.java` | Novo: handler server-side para todas as 24 habilidades de classe. Mesmo padrão de validação do `GeneralAbilityHandler` (rank, cooldown, mana). |
+| `ability/GeneralAbilityHandler.java` | Adicionado: delegação para `ClassAbilityHandler` quando `abilityId` não é geral |
+| `client/hud/AbilityHotbar.java` | Novo: HUD de 9 slots centrado acima do hotbar vanilla. Overlay de cooldown top-down. Cor por classe. Nome + custo de mana + cooldown para slot selecionado. |
+| `client/AscendantClient.java` | Reescrito: R → toggle barra, Z → disparar habilidade selecionada + cooldown visual, G/F mantêm atalhos diretos |
+
+### Habilidades de Classe (24 total)
+
+| Classe | Habilidade 1 | Habilidade 2 | Habilidade 3 |
+|--------|-------------|-------------|-------------|
+| Assassin | Shadow Step (teleporte) | Poison Blade (veneno) | Death Mark (fraqueza) |
+| Berserker | Battle Cry (força+vel) | Blood Rage (berserker) | Ground Slam (AoE) |
+| Mage | Arcane Bolt (projétil) | Blink (teleporte) | Arcane Burst (AoE) |
+| Ranger | Eagle Eye (precisão) | Multi Shot (3 flechas) | Rain of Arrows (AoE) |
+| Healer | Healing Wave (regeneração) | Barrier (escudo) | Resurrection Aura (ressurreição AoE) |
+| Knight | Taunt (agravar) | Iron Wall (resistência) | Titan Charge (carga) |
+| Shadow | Phantom Dash (iframes) | Dark Shroud (invisibilidade) | Void Rift (pull) |
+| Beastmaster | Summon Familiar (lobo) | Pack Tactics (velocidade) | Primal Roar (slowdown AoE) |
+
+### Bug Fixes
+
+| Bug | Causa | Correção |
+|-----|-------|----------|
+| `cannot find symbol MobEffects.SPEED/STRENGTH/HASTE/SLOWNESS/NAUSEA` | Minecraft 1.21.4 renomeou constants de MobEffect | `SPEED→MOVEMENT_SPEED`, `STRENGTH→DAMAGE_BOOST`, `HASTE→DIG_SPEED`, `SLOWNESS→MOVEMENT_SLOWDOWN`, `NAUSEA→CONFUSION` |
+| `no suitable method EntityType.WOLF.create(Level)` | API de Wolf alterada em 1.21.4 (wolf variants) | Usar `new Wolf(EntityType.WOLF, level)` diretamente |
+| `cannot find symbol AbilityRegistry.ALL_ABILITIES` | Campo removido no rewrite do registry | Readicionado como `public static List<AscendantAbility> ALL_ABILITIES` populado no static block |
+| `setTame cannot be applied to given types` | Chamada incorreta com 1 arg; assinatura correta é 2 args | `wolf.setTame(true, false)` |
+
+---
+
 ## Estado Atual
 
 **Última atualização:** 29/06/2026 — 00:15  
